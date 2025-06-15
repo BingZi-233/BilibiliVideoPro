@@ -28,10 +28,11 @@ jobs:
           path: build/libs/
 
   release:
+    name: Create Release
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, 'releases')
     steps:
-      - name: checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
       - name: validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -48,8 +49,9 @@ jobs:
         id: get_version
         run: |
           VERSION=$(date +"%Y.%m.%d-%H%M%S")
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-      - name: create release
+          echo "::set-output name=VERSION::$VERSION"
+      - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,17 +59,17 @@ jobs:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
           release_name: Release v${{ steps.get_version.outputs.VERSION }}
           body: |
-            自动发布版本 v${{ steps.get_version.outputs.VERSION }}
-            
-            构建时间: ${{ steps.get_version.outputs.VERSION }}
+            BilibiliVideoPro 自动发布版本
+            - 构建时间: ${{ steps.get_version.outputs.VERSION }}
+            - 提交信息: ${{ github.event.head_commit.message }}
           draft: false
           prerelease: false
       - name: find jar file
         id: find_jar
         run: |
           JAR_FILE=$(find build/libs -name "*.jar" | head -1)
-          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_OUTPUT
-      - name: upload release assets
+          echo "::set-output name=JAR_FILE::$JAR_FILE"
+      - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
