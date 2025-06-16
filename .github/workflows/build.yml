@@ -1,4 +1,4 @@
-name: Build
+name: Gradle Build and Release
 
 on:
   push:
@@ -8,41 +8,45 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, '#build')
+    if: contains(github.event.head_commit.message, '#build') || contains(github.event.head_commit.message, '#releases')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 为了获取完整的提交历史用于生成changelog
 
-      - name: Set up JDK
+      - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '8'
+          distribution: 'adopt'
+          cache: 'gradle'
 
-      - name: Cache Gradle dependencies
+      - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Cache build outputs
-        uses: actions/cache@v4
-        with:
-          path: |
-            build
-            .gradle
-          key: ${{ runner.os }}-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-
+      - name: Extract version from commit message
+        if: contains(github.event.head_commit.message, '#releases')
+        id: extract_version
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -o '#releases #v[0-9.]\+\(-beta[0-9]\+\)\?' | grep -o 'v[0-9.]\+\(-beta[0-9]\+\)\?' | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_version=${VERSION#v}" >> $GITHUB_OUTPUT  # 移除v前缀
 
-      - name: Make Gradle executable
-        run: chmod +x gradlew
+      - name: Update gradle.properties with new version
+        if: contains(github.event.head_commit.message, '#releases')
+        run: |
+          sed -i "s/version=.*/version=${{ steps.extract_version.outputs.short_version }}/g" gradle.properties
+          cat gradle.properties
 
-      - name: Clean and build
+      - name: Clean and Build with Gradle
         run: ./gradlew clean build
 
       - name: Upload build artifacts
@@ -50,4 +54,47 @@ jobs:
         with:
           name: build-artifacts
           path: build/libs/
-          retention-days: 7  # 添加保留天数，避免长期占用存储空间
+
+      - name: Generate changelog
+        if: contains(github.event.head_commit.message, '#releases')
+        id: changelog
+        run: |
+          # 获取上次发布的标签
+          LAST_RELEASE=$(git describe --tags --abbrev=0 HEAD^ || echo "")
+          
+          # 生成变更日志
+          if [ -n "$LAST_RELEASE" ]; then
+            LOG=$(git log $LAST_RELEASE..HEAD --pretty=format:"- %s (%h)")
+          else
+            LOG=$(git log --pretty=format:"- %s (%h)")
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: contains(github.event.head_commit.message, '#releases')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract_version.outputs.version }}
+          release_name: Release ${{ steps.extract_version.outputs.version }}
+          body: |
+            **更新内容:**
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(steps.extract_version.outputs.version, 'beta') }}
+
+      - name: Upload Release Asset
+        if: contains(github.event.head_commit.message, '#releases')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/libs/*
+          asset_name: ${{ steps.extract_version.outputs.version }}.jar
+          asset_content_type: application/java-archive
