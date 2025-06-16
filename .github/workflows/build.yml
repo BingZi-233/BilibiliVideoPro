@@ -3,7 +3,7 @@ name: Gradle Build and Release
 on:
   push:
     branches:
-      - master  # 如果主分支名不同请自行修改
+      - master
 
 jobs:
   build-and-release:
@@ -40,9 +40,15 @@ jobs:
         if: contains(github.event.head_commit.message, '#releases')
         id: extract_version
         run: |
-          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -o '#releases #v[0-9.]\+\(-beta[0-9]\+\)\?' | grep -o 'v[0-9.]\+\(-beta[0-9]\+\)\?' | head -1)
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -o '#releases #v[0-9.]\+\(-[a-zA-Z0-9]\+\)\?' | grep -o 'v[0-9.]\+\(-[a-zA-Z0-9]\+\)\?' | head -1)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "short_version=${VERSION#v}" >> $GITHUB_OUTPUT
+          # 判断是否为预发布（只要带有-后缀的都算）
+          if echo "$VERSION" | grep -q -- '-'; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update gradle.properties with new version
         if: contains(github.event.head_commit.message, '#releases')
@@ -86,7 +92,7 @@ jobs:
             **更新内容:**
             ${{ steps.changelog.outputs.changelog }}
           draft: false
-          prerelease: ${{ contains(steps.extract_version.outputs.version, 'beta') }}
+          prerelease: ${{ steps.extract_version.outputs.is_prerelease == 'true' }}
           files: build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
