@@ -79,7 +79,6 @@ jobs:
       - name: Release with softprops/action-gh-release
         if: contains(github.event.head_commit.message, '#releases')
         uses: softprops/action-gh-release@v2
-        id: release
         with:
           tag_name: ${{ steps.extract_version.outputs.version }}
           name: Release ${{ steps.extract_version.outputs.version }}
@@ -88,14 +87,6 @@ jobs:
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: ${{ contains(steps.extract_version.outputs.version, 'beta') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload JAR to Release
-        if: contains(github.event.head_commit.message, '#releases')
-        uses: softprops/action-gh-release@v2
-        with:
           files: build/libs/*.jar
-          tag_name: ${{ steps.extract_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
