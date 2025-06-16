@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - main  # 根据你的主分支名称修改
+      - master  # 根据你的主分支名称修改
 
 jobs:
   build:
