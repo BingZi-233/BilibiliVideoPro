@@ -100,6 +100,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: build/libs/${{ steps.extract_version.outputs.version }}.jar
-          asset_name: ${{ steps.extract_version.outputs.version }}.jar
+          asset_path: ${{ steps.verify_artifact.outputs.artifact_path }}
+          asset_name: BilibiliVideoPro-${{ steps.extract_version.outputs.version }}.jar  # 包含项目名称的文件名
           asset_content_type: application/java-archive
