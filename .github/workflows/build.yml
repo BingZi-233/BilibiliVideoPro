@@ -46,6 +46,9 @@ jobs:
           sed -i "s/version=.*/version=${{ steps.extract_version.outputs.short_version }}/g" gradle.properties
           cat gradle.properties
 
+      - name: Grant executable permissions to Gradle wrapper
+        run: chmod +x ./gradlew
+
       - name: Clean and Build with Gradle
         run: ./gradlew clean build
 
