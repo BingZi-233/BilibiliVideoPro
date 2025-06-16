@@ -14,13 +14,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # 拉取完整的提交历史
-      
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '8'
-      
+
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
         with:
@@ -30,31 +30,41 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      
+
+      - name: Cache build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            .gradle
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
       - name: Extract version from commit message
         id: extract_version
         run: |
           commit_msg="${{ github.event.head_commit.message }}"
           version=$(echo "$commit_msg" | grep -o '#releases #v[0-9]\+\.[0-9]\+\.[0-9]\+\(-beta[0-9]\+\)\?' | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+\(-beta[0-9]\+\)\?')
           echo "version=$version" >> $GITHUB_OUTPUT
-      
+
       - name: Update gradle.properties with new version
         run: |
           echo "version=${{ steps.extract_version.outputs.version }}" > gradle.properties
           cat gradle.properties
-      
+
       - name: Make Gradle executable
         run: chmod +x gradlew
-      
+
       - name: Clean and build with updated version
         run: ./gradlew clean build
-      
+
       - name: Get previous tag
         id: previous_tag
         run: |
           previous_tag=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
           echo "previous_tag=$previous_tag" >> $GITHUB_OUTPUT
-      
+
       - name: Generate changelog
         id: changelog
         run: |
@@ -67,7 +77,7 @@ jobs:
           changelog="${changelog//$'\n'/'%0A'}"
           changelog="${changelog//$'\r'/'%0D'}"
           echo "changelog=$changelog" >> $GITHUB_OUTPUT
-      
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -81,7 +91,7 @@ jobs:
             ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: ${{ contains(steps.extract_version.outputs.version, 'beta') }}
-      
+
       - name: Upload artifacts to release
         uses: actions/upload-release-asset@v1
         env:
