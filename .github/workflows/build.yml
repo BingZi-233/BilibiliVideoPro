@@ -93,13 +93,6 @@ jobs:
           draft: false
           prerelease: ${{ contains(steps.extract_version.outputs.version, 'beta') }}
 
-      - name: Find built JAR
-        if: contains(github.event.head_commit.message, '#releases')
-        id: find_artifact
-        run: |
-          ARTIFACT=$(ls build/libs/*.jar | head -1)
-          echo "artifact_path=$ARTIFACT" >> $GITHUB_OUTPUT
-
       - name: Upload Release Asset
         if: contains(github.event.head_commit.message, '#releases')
         uses: actions/upload-release-asset@v1
@@ -107,6 +100,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_artifact.outputs.artifact_path }}
+          asset_path: $(ls build/libs/*.jar | head -1)
           asset_name: BilibiliVideoPro-${{ steps.extract_version.outputs.version }}.jar
           asset_content_type: application/java-archive
