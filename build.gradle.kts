@@ -48,6 +48,17 @@ dependencies {
 
     // 可选：OkHttp日志拦截器 (用于调试)
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // ORM数据库持久化 - ORMLite
+    implementation("com.j256.ormlite:ormlite-core:6.1")
+    implementation("com.j256.ormlite:ormlite-jdbc:6.1")
+
+    // 数据库驱动
+    implementation("org.xerial:sqlite-jdbc:3.44.1.0")    // SQLite驱动
+    implementation("mysql:mysql-connector-java:8.0.33")  // MySQL驱动
+
+    // 连接池
+    implementation("com.zaxxer:HikariCP:5.1.0")
 }
 
 tasks.withType<JavaCompile> {
