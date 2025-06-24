@@ -1,12 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import io.izzel.taboolib.gradle.*
-import io.izzel.taboolib.gradle.Basic
-import io.izzel.taboolib.gradle.Bukkit
-import io.izzel.taboolib.gradle.BukkitHook
-import io.izzel.taboolib.gradle.CommandHelper
-import io.izzel.taboolib.gradle.I18n
-import io.izzel.taboolib.gradle.Metrics
-import io.izzel.taboolib.gradle.MinecraftChat
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
@@ -46,6 +39,15 @@ dependencies {
     compileOnly("ink.ptms.core:v12004:12004:universal")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
+
+    // HTTP客户端 - OkHttp
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // JSON处理 - Gson (轻量级，与OkHttp配合好)
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // 可选：OkHttp日志拦截器 (用于调试)
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }
 
 tasks.withType<JavaCompile> {

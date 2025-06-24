@@ -1,0 +1,42 @@
+load: "正在尝试进行加载..."
+loaded: "加载完成"
+active: "正在尝试进行激活..."
+activated: "激活完成"
+enable: "正在尝试进行启用..."
+enabled: "启用完成"
+disable: "正在尝试进行禁用..."
+disabled: "禁用完成"
+
+# Bilibili相关消息
+bilibili:
+  bind:
+    success: "成功绑定Bilibili账号：{nickname} ({uid})"
+    first_time_bonus: "首次绑定奖励已发放！"
+    already_bound: "您已经绑定了Bilibili账号"
+  
+  triple_action:
+    like: "检测到点赞操作"
+    coin: "检测到投币操作（{count}个）"
+    favorite: "检测到收藏操作"
+    partial_complete: "完成部分三连操作！"
+    full_complete: "恭喜完成完整三连！"
+
+  reward:
+    received: "获得{type}奖励：{description}"
+    economic: "获得{value}个{currency}"
+    item: "获得物品奖励"
+
+  streak:
+    achieved: "达成{type} {count}次连击！"
+    milestone: "连续操作里程碑达成！"
+    efficiency: "操作效率：{score}%"
+
+  video:
+    detected: "检测到{type}：{title}"
+    new_upload: "发现新视频"
+    trending: "进入热门榜单"
+
+  error:
+    not_bound: "您还没有绑定Bilibili账号"
+    api_error: "Bilibili API请求失败"
+    invalid_video: "无效的视频信息"
