@@ -2,7 +2,7 @@ package online.bingzi.bilibili.video.pro.internal.network
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,7 +44,7 @@ class BilibiliApiClient {
      *
      * 用于处理请求和响应的JSON数据
      */
-    private val gson: Gson = Gson()
+    val gson: Gson = Gson()
 
     /**
      * Bilibili API基础URL
@@ -131,7 +131,7 @@ class BilibiliApiClient {
         headers: Map<String, String> = emptyMap()
     ): ApiResponse<String> {
         return try {
-            val urlBuilder = HttpUrl.parse("$baseUrl$endpoint")?.newBuilder()
+            val urlBuilder = "$baseUrl$endpoint".toHttpUrlOrNull()?.newBuilder()
                 ?: return ApiResponse(false, message = "无效的URL: $baseUrl$endpoint")
 
             // 添加查询参数

@@ -82,7 +82,7 @@ class PlayerBindBilibiliEvent(
      * @return 格式化后的时间字符串
      */
     fun getFormattedTime(): String {
-        return java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(timestamp))
+        return java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(timestamp()))
     }
 
     override fun toString(): String {

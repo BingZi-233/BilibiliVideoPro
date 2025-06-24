@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
  * @author BilibiliVideoPro
  * @since 1.0.0
  */
-class BilibiliApi(private val client: BilibiliApiClient) {
+class BilibiliApi(val client: BilibiliApiClient) {
 
     /**
      * Bilibili通用响应格式
