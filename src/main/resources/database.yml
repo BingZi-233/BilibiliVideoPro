@@ -1,0 +1,51 @@
+# Bilibili Video Pro 数据库配置文件
+
+# 数据库类型: sqlite 或 mysql
+database:
+  type: "sqlite"
+  
+  # SQLite 配置
+  sqlite:
+    # 数据库文件路径（相对于插件数据目录）
+    file: "bilibili_data.db"
+    # 连接池配置
+    pool:
+      maximum_pool_size: 10
+      minimum_idle: 2
+      connection_timeout: 30000
+      idle_timeout: 600000
+      max_lifetime: 1800000
+  
+  # MySQL 配置
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "bilibili_video_pro"
+    username: "bilibili_user"
+    password: "your_password_here"
+    # 连接参数
+    properties:
+      useSSL: false
+      useUnicode: true
+      characterEncoding: "utf8mb4"
+      serverTimezone: "Asia/Shanghai"
+      autoReconnect: true
+      failOverReadOnly: false
+      maxReconnects: 3
+    # 连接池配置
+    pool:
+      maximum_pool_size: 20
+      minimum_idle: 5
+      connection_timeout: 30000
+      idle_timeout: 600000
+      max_lifetime: 1800000
+      leak_detection_threshold: 60000
+
+# 表前缀
+table_prefix: "bvp_"
+
+# 是否自动创建表结构
+auto_create_tables: true
+
+# 是否启用SQL日志（开发环境建议启用）
+enable_sql_logging: false 
