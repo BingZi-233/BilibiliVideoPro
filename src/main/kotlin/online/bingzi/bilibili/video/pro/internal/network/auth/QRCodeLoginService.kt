@@ -1,6 +1,8 @@
 package online.bingzi.bilibili.video.pro.internal.network.auth
 
-import com.google.gson.JsonObject
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginPollResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeData
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliApiClient
 import java.util.*
 
@@ -213,29 +215,3 @@ class QRCodeLoginService(private val apiClient: BilibiliApiClient) {
     }
 }
 
-/**
- * 二维码数据
- */
-data class QRCodeData(
-    val url: String,        // 二维码内容URL
-    val qrcodeKey: String   // 二维码密钥
-)
-
-/**
- * 二维码生成结果
- */
-sealed class QRCodeResult {
-    data class Success(val data: QRCodeData) : QRCodeResult()
-    data class Error(val message: String) : QRCodeResult()
-}
-
-/**
- * 登录轮询结果
- */
-sealed class LoginPollResult {
-    data class Success(val message: String) : LoginPollResult()
-    data class WaitingScan(val message: String) : LoginPollResult()
-    data class WaitingConfirm(val message: String) : LoginPollResult()
-    data class Expired(val message: String) : LoginPollResult()
-    data class Error(val message: String) : LoginPollResult()
-} 

@@ -1,8 +1,9 @@
 package online.bingzi.bilibili.video.pro.internal.network.auth
 
-import com.google.gson.JsonObject
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.CookieRefreshResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginStatusResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginUserInfo
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliApiClient
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -240,30 +241,3 @@ class CookieRefreshService(private val apiClient: BilibiliApiClient) {
     }
 }
 
-/**
- * 登录用户信息
- */
-data class LoginUserInfo(
-    val mid: Long,          // 用户ID
-    val username: String,   // 用户名
-    val face: String,       // 头像URL
-    val level: Int,         // 用户等级
-    val isVip: Boolean      // 是否为大会员
-)
-
-/**
- * Cookie刷新结果
- */
-sealed class CookieRefreshResult {
-    data class Success(val message: String, val refreshToken: String?) : CookieRefreshResult()
-    data class Error(val message: String) : CookieRefreshResult()
-}
-
-/**
- * 登录状态结果
- */
-sealed class LoginStatusResult {
-    data class Success(val userInfo: LoginUserInfo) : LoginStatusResult()
-    data class NotLoggedIn(val message: String) : LoginStatusResult()
-    data class Error(val message: String) : LoginStatusResult()
-} 

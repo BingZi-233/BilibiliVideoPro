@@ -1,6 +1,13 @@
 package online.bingzi.bilibili.video.pro.internal.network.video
 
-import com.google.gson.JsonObject
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.CommentCheckResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.FollowResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionStatus
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.VideoData
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.VideoDetailResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.VideoInteractionResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.VideoInteractionStatus
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliApiClient
 
 /**
@@ -299,72 +306,3 @@ class VideoInteractionService(private val apiClient: BilibiliApiClient) {
     }
 }
 
-/**
- * 三连状态数据类
- */
-data class TripleActionStatus(
-    val isLiked: Boolean,      // 是否已点赞
-    val isCoined: Boolean,     // 是否已投币
-    val isFavorited: Boolean,  // 是否已收藏
-    val coinCount: Int         // 投币数量
-)
-
-/**
- * 视频数据
- */
-data class VideoData(
-    val aid: Long,        // 视频aid
-    val bvid: String,     // 视频bvid
-    val title: String,    // 视频标题
-    val ownerMid: Long    // UP主mid
-)
-
-/**
- * 完整视频互动状态
- */
-data class VideoInteractionStatus(
-    val videoData: VideoData,
-    val tripleAction: TripleActionStatus,
-    val isFollowingUp: Boolean,
-    val hasCommented: Boolean
-)
-
-/**
- * 三连状态结果
- */
-sealed class TripleActionResult {
-    data class Success(val status: TripleActionStatus) : TripleActionResult()
-    data class Error(val message: String) : TripleActionResult()
-}
-
-/**
- * 关注状态结果
- */
-sealed class FollowResult {
-    data class Success(val isFollowing: Boolean) : FollowResult()
-    data class Error(val message: String) : FollowResult()
-}
-
-/**
- * 评论检查结果
- */
-sealed class CommentCheckResult {
-    data class Success(val hasCommented: Boolean) : CommentCheckResult()
-    data class Error(val message: String) : CommentCheckResult()
-}
-
-/**
- * 视频详情结果
- */
-sealed class VideoDetailResult {
-    data class Success(val data: VideoData) : VideoDetailResult()
-    data class Error(val message: String) : VideoDetailResult()
-}
-
-/**
- * 视频互动状态结果
- */
-sealed class VideoInteractionResult {
-    data class Success(val status: VideoInteractionStatus) : VideoInteractionResult()
-    data class Error(val message: String) : VideoInteractionResult()
-} 

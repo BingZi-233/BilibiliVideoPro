@@ -4,8 +4,8 @@ import com.j256.ormlite.stmt.QueryBuilder
 import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
-import online.bingzi.bilibili.video.pro.internal.network.auth.LoginStatusResult
-import online.bingzi.bilibili.video.pro.internal.network.auth.LoginUserInfo
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginStatusResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginUserInfo
 import java.sql.SQLException
 import java.util.*
 

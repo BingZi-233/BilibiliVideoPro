@@ -1,12 +1,12 @@
 package online.bingzi.bilibili.video.pro.internal.network
 
 import com.google.gson.Gson
-import com.google.gson.JsonObject
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.ApiResponse
 import java.util.concurrent.TimeUnit
 
 /**
@@ -160,27 +160,3 @@ class BilibiliApiClient {
     }
 }
 
-/**
- * API响应包装类
- */
-data class ApiResponse(
-    val isSuccess: Boolean,
-    val data: String,
-    val error: String?
-) {
-    companion object {
-        fun success(data: String) = ApiResponse(true, data, null)
-        fun error(error: String) = ApiResponse(false, "", error)
-    }
-    
-    /**
-     * 解析为JSON对象
-     */
-    fun asJsonObject(): JsonObject? {
-        return try {
-            Gson().fromJson(data, JsonObject::class.java)
-        } catch (e: Exception) {
-            null
-        }
-    }
-} 

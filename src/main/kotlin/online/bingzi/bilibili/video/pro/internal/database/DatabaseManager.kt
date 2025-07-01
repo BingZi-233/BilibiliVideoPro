@@ -8,7 +8,7 @@ import com.j256.ormlite.table.TableUtils
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig
-import online.bingzi.bilibili.video.pro.internal.config.DatabaseType
+import online.bingzi.bilibili.video.pro.internal.entity.database.DatabaseType
 import online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
 import taboolib.common.platform.function.console

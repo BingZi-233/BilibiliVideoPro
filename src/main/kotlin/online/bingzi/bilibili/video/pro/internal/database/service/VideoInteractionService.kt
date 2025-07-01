@@ -4,8 +4,7 @@ import com.j256.ormlite.stmt.QueryBuilder
 import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
-import online.bingzi.bilibili.video.pro.internal.network.video.VideoInteractionResult
-import online.bingzi.bilibili.video.pro.internal.network.video.VideoInteractionStatus
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.VideoInteractionResult
 import java.sql.SQLException
 import java.util.*
 
