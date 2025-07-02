@@ -59,6 +59,9 @@ dependencies {
 
     // 连接池
     implementation("com.zaxxer:HikariCP:5.1.0")
+
+    // 二维码生成库
+    implementation("com.goxogle.zxing:core:3.5.2")
 }
 
 tasks.withType<JavaCompile> {
