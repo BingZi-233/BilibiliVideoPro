@@ -1,21 +1,15 @@
 package online.bingzi.bilibili.video.pro.internal.helper
 
-import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.inventory.ItemStack
-import org.bukkit.map.MapView
-import org.bukkit.map.MapRenderer
-import org.bukkit.entity.Player
-import taboolib.platform.util.buildItem
-import taboolib.module.chat.colored
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import org.bukkit.entity.Player
+import org.bukkit.map.MapRenderer
+import org.bukkit.map.MapView
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
-import kotlin.math.min
 
 /**
  * 二维码生成Helper
@@ -120,7 +114,7 @@ object QRCodeHelper {
     /**
      * 创建二维码地图渲染器
      */
-    class QRCodeMapRenderer(private val qrImage: BufferedImage) : MapRenderer() {
+    class QRCodeMapRenderer(private val qrImage: BufferedImage, private val content: String) : MapRenderer() {
         
         override fun render(map: MapView, canvas: org.bukkit.map.MapCanvas, player: Player) {
             // 将二维码图像渲染到地图画布上
@@ -149,5 +143,14 @@ object QRCodeHelper {
                 }
             }
         }
+        
+        fun getContent(): String = content
+    }
+    
+    /**
+     * 从渲染器提取二维码内容
+     */
+    fun extractContentFromRenderer(renderer: QRCodeMapRenderer): String {
+        return renderer.getContent()
     }
 } 

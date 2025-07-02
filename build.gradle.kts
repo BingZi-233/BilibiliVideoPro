@@ -12,11 +12,15 @@ taboolib {
     env {
         install(Basic)
         install(Bukkit)
+        install(BukkitUtil)
         install(BukkitHook)
         install(CommandHelper)
         install(I18n)
         install(Metrics)
         install(MinecraftChat)
+        install(BukkitNMS)
+        install(BukkitNMSUtil)
+        install(BukkitNMSItemTag)
     }
     description {
         name = "BilibiliVideoPro"
@@ -32,6 +36,8 @@ taboolib {
 
 repositories {
     mavenCentral()
+    maven("https://sacredcraft.cn:8081/repository/public/")
+    maven("https://repo.dmulloy2.net/repository/public/") // ProtocolLib repository
 }
 
 dependencies {
@@ -61,7 +67,10 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     // 二维码生成库
-    implementation("com.goxogle.zxing:core:3.5.2")
+    implementation("com.google.zxing:core:3.5.2")
+
+    // ProtocolLib for packet handling
+    compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
 }
 
 tasks.withType<JavaCompile> {

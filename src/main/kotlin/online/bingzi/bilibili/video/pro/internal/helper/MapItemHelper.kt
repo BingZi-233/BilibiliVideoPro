@@ -5,17 +5,16 @@ import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
+import taboolib.module.chat.colored
 import taboolib.platform.util.buildItem
 import taboolib.platform.util.modifyMeta
-import taboolib.module.chat.colored
-import java.awt.image.BufferedImage
 
 /**
  * 地图物品构建Helper
  * 提供构建包含二维码的地图物品功能
  */
 object MapItemHelper {
-    
+
     /**
      * 创建包含二维码的地图物品
      * @param text 要生成二维码的文本
@@ -33,26 +32,23 @@ object MapItemHelper {
     ): ItemStack {
         // 生成二维码图像
         val qrImage = QRCodeHelper.generateQRCode(text)
-        
+
         // 创建地图视图
         val mapView = createMapView()
-        
+
         // 添加二维码渲染器
         mapView.renderers.clear()
-        mapView.addRenderer(QRCodeHelper.QRCodeMapRenderer(qrImage))
-        
+        mapView.addRenderer(QRCodeHelper.QRCodeMapRenderer(qrImage, text))
+
         // 构建地图物品
         return buildItem(Material.FILLED_MAP) {
             name = displayName.colored()
-            lore += lore.map { it.colored() }
-            
-            // 设置地图ID
-            modifyMeta<MapMeta> {
-                mapView(mapView)
-            }
+            this.colored()
+        }.modifyMeta<MapMeta> { // 设置地图ID
+            this.mapView = mapView
         }
     }
-    
+
     /**
      * 创建带有自定义样式的二维码地图物品
      * @param text 要生成二维码的文本
@@ -69,29 +65,30 @@ object MapItemHelper {
     ): ItemStack {
         val qrImage = QRCodeHelper.generateQRCode(text)
         val mapView = createMapView()
-        
+
         mapView.renderers.clear()
-        mapView.addRenderer(QRCodeHelper.QRCodeMapRenderer(qrImage))
-        
+        mapView.addRenderer(QRCodeHelper.QRCodeMapRenderer(qrImage, text))
+
         return buildItem(Material.FILLED_MAP) {
-            name = "&6&l[$category] &r&a$title".colored()
-            lore {
-                add("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                add("&7描述: &f$description".colored())
-                add("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                add("&7二维码内容:".colored())
-                add("&f$text".colored())
-                add("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                add("&e点击右键查看详细信息".colored())
-                add("&c注意: 请使用二维码扫描器扫描".colored())
-            }
-            
-            modifyMeta<MapMeta> {
-                mapView(mapView)
-            }
+            name = "&6&l[$category] &r&a$title"
+            lore.addAll(
+                listOf(
+                    "&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                    "&7描述: &f$description",
+                    "&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                    "&7二维码内容:",
+                    "&f$text",
+                    "&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                    "&e点击右键查看详细信息",
+                    "&c注意: 请使用二维码扫描器扫描"
+                )
+            )
+            colored()
+        }.modifyMeta<MapMeta> {// 设置地图ID
+            this.mapView = mapView
         }
     }
-    
+
     /**
      * 创建Bilibili登录二维码地图物品
      * @param qrCodeUrl 二维码URL
@@ -112,7 +109,7 @@ object MapItemHelper {
             }
         }
     }
-    
+
     /**
      * 创建视频分享二维码地图物品
      * @param videoUrl 视频URL
@@ -132,7 +129,7 @@ object MapItemHelper {
             category = "视频"
         )
     }
-    
+
     /**
      * 创建通用信息二维码地图物品
      * @param content 信息内容
@@ -147,7 +144,7 @@ object MapItemHelper {
             category = "通用"
         )
     }
-    
+
     /**
      * 批量创建二维码地图物品
      * @param contents 内容列表，每个元素包含文本和标题
@@ -165,7 +162,7 @@ object MapItemHelper {
             )
         }
     }
-    
+
     /**
      * 创建地图视图
      * @return MapView 新的地图视图
@@ -174,7 +171,7 @@ object MapItemHelper {
         @Suppress("DEPRECATION")
         return Bukkit.createMap(Bukkit.getWorlds().first())
     }
-    
+
     /**
      * 检查物品是否为二维码地图
      * @param item 要检查的物品
@@ -182,14 +179,14 @@ object MapItemHelper {
      */
     fun isQRCodeMap(item: ItemStack?): Boolean {
         if (item?.type != Material.FILLED_MAP) return false
-        
+
         val meta = item.itemMeta as? MapMeta ?: return false
         val mapView = meta.mapView ?: return false
-        
+
         // 检查是否包含二维码渲染器
         return mapView.renderers.any { it is QRCodeHelper.QRCodeMapRenderer }
     }
-    
+
     /**
      * 从二维码地图物品中提取文本内容
      * @param item 二维码地图物品
@@ -197,13 +194,17 @@ object MapItemHelper {
      */
     fun extractQRCodeContent(item: ItemStack): String? {
         if (!isQRCodeMap(item)) return null
-        
-        // 从物品的lore中提取内容
-        val lore = item.itemMeta?.lore ?: return null
-        return lore.find { it.contains("内容:") || it.contains("二维码内容:") }
-            ?.substringAfter(":")
-            ?.trim()
-            ?.replace("§f", "")
-            ?.replace("&f", "")
+
+        // 从渲染器中直接提取内容
+        val meta = item.itemMeta as? MapMeta ?: return null
+        val mapView = meta.mapView ?: return null
+
+        return mapView.renderers
+            .filterIsInstance<QRCodeHelper.QRCodeMapRenderer>()
+            .firstOrNull()
+            ?.let { renderer ->
+                // 从渲染器获取原始二维码文本
+                QRCodeHelper.extractContentFromRenderer(renderer)
+            }
     }
 } 
