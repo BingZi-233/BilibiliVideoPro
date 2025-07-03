@@ -21,5 +21,7 @@ interface IDatabaseProvider {
      * @param config 数据库配置
      * @return 数据源
      */
-    fun createDataSource(config: DatabaseConfig.DatabaseDetails): HikariDataSource
+    fun createDataSource(config: online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig): HikariDataSource
+
+    fun getJdbcUrl(config: online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig): String
 }

@@ -6,8 +6,8 @@ import online.bingzi.bilibili.video.pro.api.database.service.PlayerStatistics
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
-import taboolib.common.platform.Inject
-import taboolib.common.platform.Instance
+
+import taboolib.common.platform.service.PlatformExecutor
 
 /**
  * Video interaction service impl
@@ -15,10 +15,9 @@ import taboolib.common.platform.Instance
  *
  * @constructor Create empty Video interaction service impl
  */
-@Instance
 class VideoInteractionServiceImpl : IVideoInteractionService {
 
-    @Inject
+    
     lateinit var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>
 
     override fun recordInteraction(playerUuid: String, bvid: String, videoTitle: String, isLiked: Boolean, isCoined: Boolean, isFavorited: Boolean): VideoInteractionRecord {
@@ -28,19 +27,25 @@ class VideoInteractionServiceImpl : IVideoInteractionService {
             this.isFavorited = isFavorited
             this.videoTitle = videoTitle
         } ?: VideoInteractionRecord(
-            playerUuid = playerUuid,
-            bvid = bvid,
-            videoTitle = videoTitle,
-            isLiked = isLiked,
-            isCoained = isCoined,
-            isFavorited = isFavorited
+            playerUuid,
+            0, // bilibiliUid
+            bvid,
+            0L, // videoAid
+            videoTitle,
+            0L, // upMid
+            isLiked,
+            isCoined,
+            0, // coinCount
+            isFavorited,
+            false, // isFollowingUp
+            false // hasCommented
         )
         videoInteractionRecordDao.createOrUpdate(record)
         return record
     }
 
     override fun findByPlayerUuidAndBvid(playerUuid: String, bvid: String): VideoInteractionRecord? {
-        return videoInteractionRecordDao.queryForEq("player_uuid", playerUuid).firstOrNull { it.bvid == bvid }
+        return videoInteractionRecordDao.queryForEq("player_uuid", playerUuid).firstOrNull { it.videoBvid == bvid }
     }
 
     override fun getPlayerStatistics(playerUuid: String): PlayerStatistics {
@@ -59,11 +64,9 @@ class VideoInteractionServiceImpl : IVideoInteractionService {
         )
     }
 
+    @Awake(LifeCycle.ENABLE)
     companion object {
-        @Awake(LifeCycle.ENABLE)
-        fun init() {
-            // 注册服务
-            IVideoInteractionService::class.java.let { it.getConstructor() }
-        }
+        
+        
     }
 }

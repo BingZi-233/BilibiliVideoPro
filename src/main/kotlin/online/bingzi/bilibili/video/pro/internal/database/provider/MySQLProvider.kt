@@ -1,4 +1,3 @@
-
 package online.bingzi.bilibili.video.pro.internal.database.provider
 
 import com.zaxxer.hikari.HikariConfig
@@ -14,19 +13,24 @@ import online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig
 class MySQLProvider : IDatabaseProvider {
     override val type = "mysql"
 
-    override fun createDataSource(config: DatabaseConfig.DatabaseDetails): HikariDataSource {
-        val mysqlConfig = config.mysql
+    override fun createDataSource(config: DatabaseConfig): HikariDataSource {
         val hikariConfig = HikariConfig().apply {
-            jdbcUrl = "jdbc:mysql://${mysqlConfig.host}:${mysqlConfig.port}/${mysqlConfig.database}?useSSL=false&autoReconnect=true"
-            username = mysqlConfig.username
-            password = mysqlConfig.password
+            jdbcUrl = config.getMysqlJdbcUrl()
+            username = config.mysqlUsername
+            password = config.mysqlPassword
             driverClassName = "com.mysql.cj.jdbc.Driver"
-            maximumPoolSize = mysqlConfig.pool.maximumPoolSize
-            minimumIdle = mysqlConfig.pool.minimumIdle
+            maximumPoolSize = config.mysqlMaxPoolSize
+            minimumIdle = config.mysqlMinIdle
+            connectionTimeout = config.mysqlConnectionTimeout
+            idleTimeout = config.mysqlIdleTimeout
+            maxLifetime = config.mysqlMaxLifetime
+            leakDetectionThreshold = config.mysqlLeakDetectionThreshold
             poolName = "BilibiliVideoPro-MySQL-Pool"
-            addDataSourceProperty("characterEncoding", "utf8")
-            addDataSourceProperty("useUnicode", "true")
         }
         return HikariDataSource(hikariConfig)
+    }
+
+    override fun getJdbcUrl(config: DatabaseConfig): String {
+        return config.getMysqlJdbcUrl()
     }
 }

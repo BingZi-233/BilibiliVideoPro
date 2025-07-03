@@ -39,7 +39,7 @@ interface IPlayerBilibiliService {
      * @param cookie Bilibili Cookie
      * @return 玩家 Bilibili 实体
      */
-    fun createBinding(playerUuid: String, playerName: String, bilibiliUserId: Long, bilibiliUsername: String, cookie: String): PlayerBilibili
+    fun createBinding(playerUuid: String, playerName: String, bilibiliUserId: Long, bilibiliUsername: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String): PlayerBilibili
 
     /**
      * Update cookie
@@ -48,7 +48,7 @@ interface IPlayerBilibiliService {
      * @param uuid 玩家 UUID
      * @param cookie Bilibili Cookie
      */
-    fun updateCookie(uuid: String, cookie: String)
+    fun updateCookie(uuid: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String)
 
     /**
      * Delete binding

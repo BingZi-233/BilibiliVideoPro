@@ -1,4 +1,3 @@
-
 package online.bingzi.bilibili.video.pro.internal.database.provider
 
 import com.zaxxer.hikari.HikariConfig
@@ -16,17 +15,21 @@ import java.io.File
 class SQLiteProvider : IDatabaseProvider {
     override val type = "sqlite"
 
-    override fun createDataSource(config: DatabaseConfig.DatabaseDetails): HikariDataSource {
-        val sqliteConfig = config.sqlite
+    override fun createDataSource(config: DatabaseConfig): HikariDataSource {
         val hikariConfig = HikariConfig().apply {
-            jdbcUrl = "jdbc:sqlite:${File(getDataFolder(), sqliteConfig.file)}"
+            jdbcUrl = "jdbc:sqlite:${config.getSqliteFilePath()}"
             driverClassName = "org.sqlite.JDBC"
-            maximumPoolSize = sqliteConfig.pool.maximumPoolSize
-            minimumIdle = sqliteConfig.pool.minimumIdle
+            maximumPoolSize = config.sqliteMaxPoolSize
+            minimumIdle = config.sqliteMinIdle
+            connectionTimeout = config.sqliteConnectionTimeout
+            idleTimeout = config.sqliteIdleTimeout
+            maxLifetime = config.sqliteMaxLifetime
             poolName = "BilibiliVideoPro-SQLite-Pool"
-            addDataSourceProperty("characterEncoding", "utf8")
-            addDataSourceProperty("useUnicode", "true")
         }
         return HikariDataSource(hikariConfig)
+    }
+
+    override fun getJdbcUrl(config: DatabaseConfig): String {
+        return "jdbc:sqlite:${config.getSqliteFilePath()}"
     }
 }

@@ -12,7 +12,6 @@ import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractio
 import online.bingzi.bilibili.video.pro.internal.database.provider.IDatabaseProvider
 import online.bingzi.bilibili.video.pro.internal.database.provider.MySQLProvider
 import online.bingzi.bilibili.video.pro.internal.database.provider.SQLiteProvider
-import taboolib.common.TabooLibAPI
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
 import java.sql.SQLException
@@ -27,8 +26,8 @@ object DatabaseManager {
     private var dataSource: HikariDataSource? = null
 
     // DAO实例
-    private var playerBilibiliDao: Dao<PlayerBilibili, Long>? = null
-    private var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>? = null
+    lateinit var playerBilibiliDao: Dao<PlayerBilibili, Long>
+    lateinit var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>
 
     private val providers = mutableMapOf<String, IDatabaseProvider>()
 
@@ -55,14 +54,14 @@ object DatabaseManager {
         return try {
             console().sendInfo("正在初始化数据库连接...")
 
-            val dbType = DatabaseConfig.database.type.lowercase()
+            val dbType = DatabaseConfig.databaseType.lowercase()
             console().sendInfo("数据库类型: $dbType")
 
             val provider = providers[dbType]
                 ?: throw IllegalStateException("不支持的数据库类型: $dbType, 请确保已注册对应的IDatabaseProvider")
 
-            dataSource = provider.createDataSource(DatabaseConfig.database)
-            connectionSource = JdbcConnectionSource(dataSource)
+            dataSource = provider.createDataSource(DatabaseConfig)
+            connectionSource = JdbcConnectionSource(provider.getJdbcUrl(DatabaseConfig))
 
             createTables()
             initializeDAOs()
@@ -116,8 +115,8 @@ object DatabaseManager {
         val connection = connectionSource ?: throw SQLException("数据库连接未初始化")
 
         try {
-            playerBilibiliDao = DaoManager.createDao(connection, PlayerBilibili::class.java).also { TabooLibAPI.register(it) }
-            videoInteractionRecordDao = DaoManager.createDao(connection, VideoInteractionRecord::class.java).also { TabooLibAPI.register(it) }
+            playerBilibiliDao = DaoManager.createDao(connection, PlayerBilibili::class.java)
+            videoInteractionRecordDao = DaoManager.createDao(connection, VideoInteractionRecord::class.java)
 
             console().sendInfo("DAO初始化完成")
 
@@ -127,19 +126,9 @@ object DatabaseManager {
         }
     }
 
-    /**
-     * 获取玩家Bilibili绑定DAO
-     */
-    fun getPlayerBilibiliDao(): Dao<PlayerBilibili, Long> {
-        return playerBilibiliDao ?: throw IllegalStateException("PlayerBilibili DAO未初始化")
-    }
+    
 
-    /**
-     * 获取视频互动记录DAO
-     */
-    fun getVideoInteractionRecordDao(): Dao<VideoInteractionRecord, Long> {
-        return videoInteractionRecordDao ?: throw IllegalStateException("VideoInteractionRecord DAO未初始化")
-    }
+    
 
     /**
      * 获取数据库连接源
@@ -178,14 +167,15 @@ object DatabaseManager {
      * 执行数据库健康检查
      */
     fun healthCheck(): DatabaseHealthInfo {
+        var poolStatus = "连接池未初始化" // Default value
         return try {
             val isConnected = isConnectionValid()
-            val poolStatus = getPoolStatus()
-            val dbType = DatabaseConfig.database.type
+            poolStatus = getPoolStatus() // Assign here
+            val dbType = DatabaseConfig.databaseType
 
             if (isConnected) {
                 // 尝试执行一个简单的查询来验证连接
-                val playerDao = getPlayerBilibiliDao()
+                val playerDao = playerBilibiliDao
                 playerDao.queryBuilder().limit(1).query()
 
                 DatabaseHealthInfo(
@@ -206,8 +196,8 @@ object DatabaseManager {
             DatabaseHealthInfo(
                 isHealthy = false,
                 message = "数据库健康检查失败: ${e.message}",
-                databaseType = DatabaseConfig.database.type,
-                poolStatus = getPoolStatus()
+                databaseType = DatabaseConfig.databaseType,
+                poolStatus = poolStatus
             )
         }
     }
@@ -224,8 +214,6 @@ object DatabaseManager {
 
             connectionSource = null
             dataSource = null
-            playerBilibiliDao = null
-            videoInteractionRecordDao = null
 
             console().sendInfo("数据库连接已关闭")
 

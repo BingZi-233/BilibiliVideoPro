@@ -70,7 +70,7 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
 
     // ProtocolLib for packet handling
-    compileOnly("com.comphenix.protocol:ProtocolLib:5.3.0")
+    implementation("com.comphenix.protocol:ProtocolLib:4.8.0")
 }
 
 tasks.withType<JavaCompile> {
