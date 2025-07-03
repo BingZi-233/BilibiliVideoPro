@@ -2,195 +2,128 @@
 
 ## 系统概述
 
-本系统提供了完整的持久化解决方案，支持：
-- 玩家Bilibili账户绑定管理
-- 视频互动状态记录
-- SQLite和MySQL双数据库支持
-- 自动初始化和健康检查
+本系统提供了完整的、可扩展的持久化解决方案，其设计遵循了现代软件工程原则，如SOLID。
+
+- **依赖注入 (DI)**: 系统全面采用TabooLib的依赖注入容器，实现了低耦合和高内聚。
+- **面向接口编程**: 所有服务都提供了接口，使得业务逻辑与具体实现分离，极大地提高了可测试性和可扩展性。
+- **策略模式**: 数据库后端采用策略模式，可以轻松添加对新数据库（如PostgreSQL）的支持，而无需修改核心代码。
+- **玩家Bilibili账户绑定管理**
+- **视频互动状态记录**
+- **SQLite和MySQL双数据库支持**
+- **自动初始化和健康检查**
 
 ## 核心组件
 
-### 1. 配置系统
-- **DatabaseConfig**: 使用TabooLib的@Config注解读取database.yml配置
-- 支持热重载和类型安全的配置访问
+### 1. 服务接口 (API)
+- **位置**: `online.bingzi.bilibili.video.pro.api.database.service`
+- **描述**: 定义了所有数据库服务的“契约”，例如 `IPlayerBilibiliService` 和 `IVideoInteractionService`。您的代码应该始终依赖于这些接口，而不是它们的具体实现。
 
-### 2. 数据库管理器
-- **DatabaseManager**: 负责连接管理、表创建、DAO初始化
-- **PluginManager**: 使用@Awake注解自动处理插件生命周期
+### 2. 服务实现 (Internal)
+- **位置**: `online.bingzi.bilibili.video.pro.internal.database.service`
+- **描述**: 包含了接口的具体实现，例如 `PlayerBilibiliServiceImpl`。这些类被标记为 `@Instance`，由TabooLib自动管理其生命周期。
 
-### 3. 实体层
-- **PlayerBilibili**: 玩家绑定实体，包含Cookie存储和用户信息
-- **VideoInteractionRecord**: 视频互动记录，支持三连状态追踪
+### 3. 数据库提供者 (Provider)
+- **位置**: `online.bingzi.bilibili.video.pro.internal.database.provider`
+- **描述**: 实现了数据库创建的策略模式。每个 `IDatabaseProvider` 负责一种特定类型数据库的连接池创建。
 
-### 4. 服务层
-- **PlayerBilibiliService**: 玩家绑定业务逻辑
-- **VideoInteractionService**: 视频互动记录业务逻辑
+### 4. 数据库管理器 (Manager)
+- **DatabaseManager**: 负责协调数据库的初始化、DAO注册和健康检查。它现在是一个协调者，而不是一个包含具体实现逻辑的工厂。
 
-## 配置示例
+## 使用示例 (推荐方式)
 
-### database.yml
-```yaml
-database:
-  type: "sqlite"  # 或 "mysql"
-  sqlite:
-    file: "bilibili_data.db"
-    pool:
-      maximum_pool_size: 10
-      minimum_idle: 2
-  mysql:
-    host: "localhost"
-    port: 3306
-    database: "bilibili_video_pro"
-    username: "bilibili_user"
-    password: "your_password_here"
-    pool:
-      maximum_pool_size: 20
-      minimum_idle: 5
+利用TabooLib的依赖注入是与数据库服务交互的最佳方式。您不再需要手动实例化任何 `Service` 类。
 
-table_prefix: "bvp_"
-auto_create_tables: true
-enable_sql_logging: false
-```
+### 在TabooLib命令或服务中使用
 
-## 使用示例
-
-### 1. 玩家绑定
 ```kotlin
-val playerService = PlayerBilibiliService()
+import online.bingzi.bilibili.video.pro.api.database.service.IPlayerBilibiliService
+import taboolib.common.platform.Inject
+import taboolib.common.platform.command.CommandBody
+import taboolib.common.platform.command.CommandHeader
 
-// 创建绑定
-val result = playerService.createBinding(
-    playerUuid = player.uniqueId.toString(),
-    playerName = player.name,
-    userInfo = loginUserInfo,
-    cookies = cookieMap
-)
+@CommandHeader(name = "myprofile")
+object MyProfileCommand {
 
-when (result) {
-    is BindingResult.Success -> {
-        player.sendMessage("绑定成功!")
-    }
-    is BindingResult.AlreadyBound -> {
-        player.sendMessage("已绑定账户")
-    }
-    else -> {
-        player.sendMessage("绑定失败")
-    }
-}
+    // 使用 @Inject 注解，TabooLib会自动将服务实例注入到这个字段中
+    @Inject
+    lateinit var playerService: IPlayerBilibiliService
 
-// 查找绑定
-val binding = playerService.findByPlayerUuid(playerUuid)
-if (binding != null) {
-    println("用户: ${binding.bilibiliUsername}")
+    @CommandBody
+    fun view(sender: Player) {
+        // 直接使用注入的服务，代码干净且解耦
+        val binding = playerService.findByPlayerUuid(sender.uniqueId.toString())
+        if (binding != null) {
+            sender.sendMessage("你绑定的Bilibili账户是: ${binding.bilibiliUsername}")
+        } else {
+            sender.sendMessage("你尚未绑定Bilibili账户。")
+        }
+    }
 }
 ```
 
-### 2. 视频互动记录
-```kotlin
-val videoService = VideoInteractionService()
+### 获取统计信息
 
-// 记录视频状态
-when (val result = videoService.recordInteraction(playerUuid, "BV1xx411c7mD")) {
-    is RecordResult.Created -> {
-        println("新记录: ${result.record.videoTitle}")
-    }
-    is RecordResult.Updated -> {
-        println("状态: ${result.record.getTripleActionStatus()}")
-    }
-    else -> {
-        println("记录失败")
+```kotlin
+import online.bingzi.bilibili.video.pro.api.database.service.IVideoInteractionService
+
+@CommandHeader(name = "mystats")
+object MyStatsCommand {
+
+    @Inject
+    lateinit var videoService: IVideoInteractionService
+
+    @CommandBody
+    fun view(sender: Player) {
+        val stats = videoService.getPlayerStatistics(sender.uniqueId.toString())
+        sender.sendMessage("你已记录 ${stats.totalVideos} 个视频的互动，完成了 ${stats.tripleCompletedVideos} 次三连。")
     }
 }
-
-// 获取统计信息
-val stats = videoService.getPlayerStatistics(playerUuid)
-println("总视频数: ${stats.totalVideos}")
-println("三连完成数: ${stats.tripleCompletedVideos}")
-```
-
-### 3. 系统健康检查
-```kotlin
-// 检查数据库状态
-val healthInfo = DatabaseManager.healthCheck()
-if (healthInfo.isHealthy) {
-    console().sendInfo("数据库正常")
-} else {
-    console().sendInfo("数据库异常: ${healthInfo.message}")
-}
-
-// 获取连接池状态
-val poolStatus = DatabaseManager.getPoolStatus()
-console().sendInfo(poolStatus)
 ```
 
 ## 最佳实践
 
-### 1. 异步操作
-```kotlin
-// 数据库操作应该在异步线程中执行
-Bukkit.getScheduler().runTaskAsynchronously(plugin) {
-    val result = playerService.createBinding(...)
-    
-    // 回到主线程更新UI
-    Bukkit.getScheduler().runTask(plugin) {
-        player.sendMessage("操作完成")
+1.  **依赖接口**: 始终在你的代码中使用 `IPlayerBilibiliService` 和 `IVideoInteractionService`，而不是具体的 `ServiceImpl` 类。
+2.  **使用注入**: 优先使用 `@Inject` 来获取服务实例。只有在无法使用注入的旧式代码中，才考虑使用 `TabooLibAPI.get()`。
+3.  **异步操作**: 数据库操作应该在异步线程中执行，以避免阻塞服务器主线程。
+
+    ```kotlin
+    submit(async = true) {
+        val stats = videoService.getPlayerStatistics(player.uniqueId.toString())
+        // ... 回到主线程更新UI ...
+        submit {
+            player.sendMessage("查询完成！")
+        }
     }
-}
-```
+    ```
 
-### 2. 错误处理
-```kotlin
-try {
-    val result = videoService.recordInteraction(...)
-} catch (e: DatabaseServiceException) {
-    logger.error("数据库操作失败", e)
-} catch (e: Exception) {
-    logger.error("未知错误", e)
-}
-```
+## 扩展数据库支持
 
-### 3. 定期维护
-```kotlin
-// 定期清理旧数据
-Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, {
-    val deleted = videoService.cleanupOldRecords(30)
-    console().sendInfo("清理了 $deleted 条记录")
-}, 20L * 60L * 60L, 20L * 60L * 60L * 24L)
-```
+如果您想添加对 **PostgreSQL** 的支持，只需两步：
 
-## 自动初始化
+1.  **创建 `PostgreSQLProvider.kt`**:
 
-系统使用TabooLib的@Awake注解自动管理生命周期：
+    ```kotlin
+    class PostgreSQLProvider : IDatabaseProvider {
+        override val type = "postgresql"
+        override fun createDataSource(config: DatabaseConfig.DatabaseDetails): HikariDataSource {
+            // ... 实现PostgreSQL数据源的创建逻辑 ...
+        }
+    }
+    ```
 
-```kotlin
-@Awake(value = Awake.LifeCycle.ENABLE)
-fun initialize() {
-    // 自动初始化数据库和网络管理器
-}
+2.  **注册提供者**:
+    在 `DatabaseManager` 的 `init` 块中添加一行代码：
 
-@Awake(value = Awake.LifeCycle.ACTIVE)
-fun healthCheck() {
-    // 自动执行健康检查
-}
+    ```kotlin
+    init {
+        registerProvider(SQLiteProvider())
+        registerProvider(MySQLProvider())
+        registerProvider(PostgreSQLProvider()) // 添加这一行
+    }
+    ```
 
-@Awake(value = Awake.LifeCycle.DISABLE)
-fun cleanup() {
-    // 自动清理资源
-}
-```
-
-## 故障排除
-
-### 常见问题
-1. **配置错误**: 检查database.yml格式和参数
-2. **连接失败**: 验证数据库服务状态和权限
-3. **性能问题**: 调整连接池大小和启用索引
-
-### 调试工具
-- 启用SQL日志: `enable_sql_logging: true`
-- 健康检查: `DatabaseManager.healthCheck()`
-- 连接池监控: `DatabaseManager.getPoolStatus()`
+就这样！整个系统的其他部分都无需改动。
 
 ---
 
-现在您已经拥有了一个完整的、基于TabooLib配置系统的数据库持久化解决方案，可以安全地管理玩家绑定和视频互动数据。 
+通过采用依赖注入和面向接口的设计，本项目的数据库模块现在拥有了极高的灵活性和可维护性。

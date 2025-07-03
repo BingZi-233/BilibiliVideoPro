@@ -39,9 +39,13 @@ BilibiliVideoPro 是一个强大的、模块化的Bilibili互动插件/库。它
    networkManager.initialize()
    ```
 
-3. **使用数据库功能**
+3. **使用数据库功能 (推荐)**
    ```kotlin
-   val playerService = PlayerBilibiliService()
+   // 在你的TabooLib组件 (如命令) 中
+   @Inject
+   lateinit var playerService: IPlayerBilibiliService // 依赖接口
+
+   // 然后直接使用
    val binding = playerService.findByPlayerUuid(playerUuid)
    ```
 
