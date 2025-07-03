@@ -16,18 +16,18 @@
 
 ### 1. 服务接口 (API)
 - **位置**: `online.bingzi.bilibili.video.pro.api.database.service`
-- **描述**: 定义了所有数据库服务的“契约”，例如 `IPlayerBilibiliService` 和 `IVideoInteractionService`。您的代码应该始终依赖于这些接口，而不是它们的具体实现。
+- **描述**: 定义了所有数据库服务的“契约”，例如 `IPlayerBilibiliService` 和 `IVideoInteractionService`。请注意，`IPlayerBilibiliService` 中的 `createBinding` 和 `updateCookie` 方法现在接受更细粒度的 Bilibili Cookie 参数（`sessdata`, `biliJct`, `dedeUserId`, `dedeUserIdMd5`），而不是单一的 `cookie` 字符串。您的代码应该始终依赖于这些接口，而不是它们的具体实现。
 
 ### 2. 服务实现 (Internal)
 - **位置**: `online.bingzi.bilibili.video.pro.internal.database.service`
-- **描述**: 包含了接口的具体实现，例如 `PlayerBilibiliServiceImpl`。这些类被标记为 `@Instance`，由TabooLib自动管理其生命周期。
+- **描述**: 包含了接口的具体实现，例如 `PlayerBilibiliServiceImpl`。这些类由TabooLib自动管理其生命周期。
 
 ### 3. 数据库提供者 (Provider)
 - **位置**: `online.bingzi.bilibili.video.pro.internal.database.provider`
-- **描述**: 实现了数据库创建的策略模式。每个 `IDatabaseProvider` 负责一种特定类型数据库的连接池创建。
+- **描述**: 实现了数据库创建的策略模式。每个 `IDatabaseProvider` 负责一种特定类型数据库的连接池创建。`createDataSource` 方法现在接受 `DatabaseConfig` 对象，并且新增了 `getJdbcUrl` 方法用于获取JDBC连接字符串。
 
 ### 4. 数据库管理器 (Manager)
-- **DatabaseManager**: 负责协调数据库的初始化、DAO注册和健康检查。它现在是一个协调者，而不是一个包含具体实现逻辑的工厂。
+- **DatabaseManager**: 负责协调数据库的初始化、DAO注册和健康检查。DAO实例现在通过 `lateinit var` 延迟初始化，并且不再需要通过 `TabooLibAPI.register` 进行注册。它现在是一个协调者，而不是一个包含具体实现逻辑的工厂。
 
 ## 使用示例 (推荐方式)
 

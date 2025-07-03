@@ -285,14 +285,12 @@ if (networkManager.cookieRefresh.isCookieExpiringSoon()) {
 ### 手动设置Cookie
 
 ```kotlin
-val cookies = mapOf(
-    "SESSDATA" to "your_sessdata_value",
-    "bili_jct" to "your_bili_jct_value",
-    "DedeUserID" to "your_user_id",
-    "DedeUserID__ckMd5" to "your_user_id_md5"
-)
+val sessdata = "your_sessdata_value"
+val biliJct = "your_bili_jct_value"
+val dedeUserId = "your_user_id"
+val dedeUserIdMd5 = "your_user_id_md5"
 
-networkManager.setCookies(cookies)
+networkManager.setCookies(sessdata, biliJct, dedeUserId, dedeUserIdMd5)
 
 // 验证设置的Cookie
 if (networkManager.cookieRefresh.validateCookie()) {

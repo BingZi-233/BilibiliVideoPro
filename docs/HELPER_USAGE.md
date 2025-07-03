@@ -130,6 +130,30 @@
    }
    ```
 
+## NMSHelper - 地图数据包处理Helper
+
+提供使用 ProtocolLib 发送地图数据包的可靠功能。已重构以正确使用 ProtocolLib 4.8.0+ 和现代 Minecraft 版本 (1.19.4+)。
+
+#### 主要功能
+
+1.  **发送地图像素数据**
+    用于在地图上绘制图像。
+    ```kotlin
+    NMSHelper.sendMapData(player, mapId, data)
+    ```
+
+2.  **更新地图属性**
+    例如缩放级别或锁定状态，而不改变像素数据。
+    ```kotlin
+    NMSHelper.updateMapProperties(player, mapId, scale, trackingPosition, locked)
+    ```
+
+#### 技术特性
+
+-   使用 ProtocolLib 库处理地图数据包。
+-   支持发送完整的地图数据包，包括地图ID、缩放级别、锁定状态、更新区域的像素数据等。
+-   包含错误处理机制。
+
 ## 集成建议
 
 ### 在现有登录系统中使用
@@ -173,6 +197,9 @@ fun qrcode(sender: CommandSender, @Argument text: String) {
 // 二维码生成库
 implementation("com.google.zxing:core:3.5.2")
 implementation("com.google.zxing:javase:3.5.2")
+
+// ProtocolLib for packet handling
+implementation("com.comphenix.protocol:ProtocolLib:4.8.0")
 ```
 
 ## 注意事项
