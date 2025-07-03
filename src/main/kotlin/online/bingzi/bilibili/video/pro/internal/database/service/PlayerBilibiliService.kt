@@ -1,7 +1,6 @@
 package online.bingzi.bilibili.video.pro.internal.database.service
 
 import com.j256.ormlite.dao.Dao
-import online.bingzi.bilibili.video.pro.api.database.service.IPlayerBilibiliService
 import online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
@@ -14,20 +13,20 @@ import taboolib.common.platform.service.PlatformExecutor
  *
  * @constructor Create empty Player bilibili service impl
  */
-class PlayerBilibiliServiceImpl : IPlayerBilibiliService {
+object PlayerBilibiliService {
 
     
     lateinit var playerBilibiliDao: Dao<PlayerBilibili, Long>
 
-    override fun findByPlayerUuid(uuid: String): PlayerBilibili? {
+    fun findByPlayerUuid(uuid: String): PlayerBilibili? {
         return playerBilibiliDao.queryForEq("player_uuid", uuid).firstOrNull()
     }
 
-    override fun findByBilibiliUserId(userId: Long): PlayerBilibili? {
+    fun findByBilibiliUserId(userId: Long): PlayerBilibili? {
         return playerBilibiliDao.queryForEq("bilibili_uid", userId).firstOrNull()
     }
 
-    override fun createBinding(playerUuid: String, playerName: String, bilibiliUserId: Long, bilibiliUsername: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String): PlayerBilibili {
+    fun createBinding(playerUuid: String, playerName: String, bilibiliUserId: Long, bilibiliUsername: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String): PlayerBilibili {
         val playerBilibili = PlayerBilibili(
             playerUuid,
             playerName,
@@ -42,20 +41,14 @@ class PlayerBilibiliServiceImpl : IPlayerBilibiliService {
         return playerBilibili
     }
 
-    override fun updateCookie(uuid: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String) {
+    fun updateCookie(uuid: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String) {
         val playerBilibili = findByPlayerUuid(uuid) ?: return
         playerBilibili.updateCookies(sessdata, biliJct, dedeUserId, dedeUserIdMd5)
         playerBilibiliDao.update(playerBilibili)
     }
 
-    override fun deleteBinding(uuid: String) {
+    fun deleteBinding(uuid: String) {
         val playerBilibili = findByPlayerUuid(uuid) ?: return
         playerBilibiliDao.delete(playerBilibili)
-    }
-
-    @Awake(LifeCycle.ENABLE)
-    companion object {
-        
-        
     }
 }

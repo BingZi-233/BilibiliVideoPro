@@ -1,13 +1,8 @@
 package online.bingzi.bilibili.video.pro.internal.database.service
 
 import com.j256.ormlite.dao.Dao
-import online.bingzi.bilibili.video.pro.api.database.service.IVideoInteractionService
-import online.bingzi.bilibili.video.pro.api.database.service.PlayerStatistics
+import online.bingzi.bilibili.video.pro.internal.entity.database.service.PlayerStatistics
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
-import taboolib.common.LifeCycle
-import taboolib.common.platform.Awake
-
-import taboolib.common.platform.service.PlatformExecutor
 
 /**
  * Video interaction service impl
@@ -15,12 +10,12 @@ import taboolib.common.platform.service.PlatformExecutor
  *
  * @constructor Create empty Video interaction service impl
  */
-class VideoInteractionServiceImpl : IVideoInteractionService {
+object VideoInteractionService {
 
     
     lateinit var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>
 
-    override fun recordInteraction(playerUuid: String, bvid: String, videoTitle: String, isLiked: Boolean, isCoined: Boolean, isFavorited: Boolean): VideoInteractionRecord {
+    fun recordInteraction(playerUuid: String, bvid: String, videoTitle: String, isLiked: Boolean, isCoined: Boolean, isFavorited: Boolean): VideoInteractionRecord {
         val record = findByPlayerUuidAndBvid(playerUuid, bvid)?.apply {
             this.isLiked = isLiked
             this.isCoined = isCoined
@@ -44,11 +39,11 @@ class VideoInteractionServiceImpl : IVideoInteractionService {
         return record
     }
 
-    override fun findByPlayerUuidAndBvid(playerUuid: String, bvid: String): VideoInteractionRecord? {
+    fun findByPlayerUuidAndBvid(playerUuid: String, bvid: String): VideoInteractionRecord? {
         return videoInteractionRecordDao.queryForEq("player_uuid", playerUuid).firstOrNull { it.videoBvid == bvid }
     }
 
-    override fun getPlayerStatistics(playerUuid: String): PlayerStatistics {
+    fun getPlayerStatistics(playerUuid: String): PlayerStatistics {
         val records = videoInteractionRecordDao.queryForEq("player_uuid", playerUuid)
         val totalVideos = records.size.toLong()
         val likedVideos = records.count { it.isLiked }.toLong()
@@ -62,11 +57,5 @@ class VideoInteractionServiceImpl : IVideoInteractionService {
             favoritedVideos = favoritedVideos,
             tripleCompletedVideos = tripleCompletedVideos
         )
-    }
-
-    @Awake(LifeCycle.ENABLE)
-    companion object {
-        
-        
     }
 }

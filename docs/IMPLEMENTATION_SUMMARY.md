@@ -17,7 +17,6 @@
     - **多数据库支持**: 支持SQLite和MySQL两种数据库，并通过策略模式轻松扩展。
     - **自动初始化与健康检查**: 确保数据库连接的稳定性和可用性。
 - **主要更新**:
-    - **接口细化**: `IPlayerBilibiliService` 中的 `createBinding` 和 `updateCookie` 方法现在接受更细粒度的 Bilibili Cookie 参数（`sessdata`, `biliJct`, `dedeUserId`, `dedeUserIdMd5`），提高了安全性与灵活性。
     - **管理优化**: `DatabaseManager` 进行了重构，DAO实例通过 `lateinit var` 延迟初始化，并移除了 `TabooLibAPI` 的相关注册，简化了数据库管理逻辑。
     - **提供者增强**: `IDatabaseProvider` 新增 `getJdbcUrl` 方法，并更新 `createDataSource` 以接受完整的 `DatabaseConfig` 对象，提供了更灵活的数据库配置。
 
