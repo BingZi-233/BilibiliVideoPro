@@ -32,6 +32,10 @@ taboolib {
         links {
             name("https://www.bingzi.online")
         }
+        dependencies {
+            name("PlaceholderAPI").optional(true)
+            name("ProtocolLib")
+        }
     }
     version { taboolib = "6.2.3-20d868d" }
 }
