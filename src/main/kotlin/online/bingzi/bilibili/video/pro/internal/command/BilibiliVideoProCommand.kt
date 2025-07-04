@@ -328,7 +328,7 @@ object BilibiliVideoProCommand {
                         setCooldown(player, bvid)
                         
                         // 执行奖励脚本
-                        executeRewardScript(player)
+                        executeRewardScript(player, bvid)
                     } else {
                         submit(async = false) {
                             player.sendLang("tripleActionIncomplete", 
@@ -401,13 +401,31 @@ object BilibiliVideoProCommand {
     /**
      * 执行奖励脚本
      */
-    private fun executeRewardScript(player: Player) {
+    private fun executeRewardScript(player: Player, bvid: String) {
         if (!config.getBoolean("triple_action_rewards.enabled", true)) {
             return
         }
         
-        val script = config.getString("triple_action_rewards.reward_script", "") ?: return
-        if (script.isBlank()) return
+        // 首先检查特定BV号的配置
+        val specificPath = "triple_action_rewards.specific_videos.$bvid"
+        val specificEnabled = config.getBoolean("$specificPath.enabled", true)
+        
+        val script = if (config.contains("$specificPath.reward_script")) {
+            // 使用特定BV号的配置
+            if (!specificEnabled) {
+                // 如果特定BV号被禁用，则不执行奖励
+                return
+            }
+            config.getString("$specificPath.reward_script", "")
+        } else {
+            // 使用默认配置
+            if (!config.getBoolean("triple_action_rewards.default.enabled", true)) {
+                return
+            }
+            config.getString("triple_action_rewards.default.reward_script", "")
+        }
+        
+        if (script.isNullOrBlank()) return
         
         submit(async = false) {
             try {
