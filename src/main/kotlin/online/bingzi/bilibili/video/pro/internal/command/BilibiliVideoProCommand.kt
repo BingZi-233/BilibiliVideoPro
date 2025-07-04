@@ -1,183 +1,470 @@
 package online.bingzi.bilibili.video.pro.internal.command
 
+import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
+import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteractionService
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginPollResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionResult
+import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
-import online.bingzi.bilibili.video.pro.internal.network.BilibiliApiClient
+import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
+import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
 import online.bingzi.bilibili.video.pro.internal.network.auth.QRCodeLoginService
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import taboolib.common.platform.command.CommandBody
-import taboolib.common.platform.command.CommandHeader
-import taboolib.common.platform.command.mainCommand
-import taboolib.common.platform.command.subCommand
+import taboolib.common.platform.command.*
 import taboolib.common.platform.function.submit
-import taboolib.expansion.createHelper
-import taboolib.module.chat.colored
-import java.util.*
+import taboolib.common.platform.ProxyPlayer
+import taboolib.module.configuration.Config
+import taboolib.module.configuration.Configuration
+import taboolib.module.lang.sendLang
+import taboolib.platform.util.sendLang
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * BilibiliVideoPro 主命令处理器
- * 统一命令注册入口，包含所有插件功能
+ * 提供登录、一键三联检查、状态管理等功能
  */
-@CommandHeader(name = "bilibilipro", aliases = ["bvp", "bilibili"], description = "BilibiliVideoPro 插件主命令")
+@CommandHeader(name = "bilibilipro", aliases = ["bvp", "bilibili"], permission = "bilibilipro.use")
 object BilibiliVideoProCommand {
-
-    // Bilibili服务实例
-    private val apiClient = BilibiliApiClient()
-    private val loginService = QRCodeLoginService(apiClient)
     
-    // 存储正在登录的玩家（避免重复登录）
-    private val loginInProgress = mutableSetOf<UUID>()
-
+    @Config("config.yml")
+    lateinit var config: Configuration
+    
+    // 冷却时间管理
+    private val playerCooldowns = ConcurrentHashMap<String, Long>()
+    private val videoCooldowns = ConcurrentHashMap<String, Long>()
+    
+    // 正在进行的登录会话
+    private val loginSessions = ConcurrentHashMap<String, String>()
+    
+    /**
+     * 主命令 - 显示帮助信息
+     */
     @CommandBody
     val main = mainCommand {
-        createHelper()
         execute<CommandSender> { sender, _, _ ->
-            sender.sendMessage("&6&l========== BilibiliVideoPro ==========".colored())
-            sender.sendMessage("&a版本: &f1.0.0".colored())
-            sender.sendMessage("&a作者: &fBingZi-233".colored())
-            sender.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-            sender.sendMessage("&e可用命令:".colored())
-            sender.sendMessage("&a/bvp info &7- &f查看插件信息".colored())
-            sender.sendMessage("&a/bvp login &7- &f登录哔哩哔哩账户".colored())
-            sender.sendMessage("&a/bvp status &7- &f查看登录状态".colored())
-            sender.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-            sender.sendMessage("&7使用 &a/bvp help &7获取更多帮助".colored())
+            sender.sendLang("commandHelpTitle")
+            sender.sendLang("commandHelpLogin")
+            sender.sendLang("commandHelpCheck")
+            sender.sendLang("commandHelpStatus")
+            sender.sendLang("commandHelpInfo")
+            if (sender.hasPermission("bilibilipro.admin")) {
+                sender.sendLang("commandHelpUnbind")
+                sender.sendLang("commandHelpReload")
+            }
         }
     }
-
-    @CommandBody
-    val info = subCommand {
-        literal("info")
-        execute<CommandSender> { sender, _, _ ->
-            sender.sendMessage("&6&l========== 插件信息 ==========".colored())
-            sender.sendMessage("&a插件名称: &fBilibiliVideoPro".colored())
-            sender.sendMessage("&a插件版本: &f1.0.0".colored())
-            sender.sendMessage("&a开发者: &fBingZi-233".colored())
-            sender.sendMessage("&a项目地址: &fhttps://github.com/BingZi-233/BilibiliVideoPro".colored())
-            sender.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-            sender.sendMessage("&e功能特性:".colored())
-            sender.sendMessage("&7• &f哔哩哔哩账户登录".colored())
-            sender.sendMessage("&7• &f视频互动功能".colored())
-            sender.sendMessage("&7• &f二维码地图显示".colored())
-            sender.sendMessage("&7• &f数据持久化存储".colored())
-        }
-    }
-
+    
+    /**
+     * 登录命令 - 开始QR码登录流程
+     */
     @CommandBody
     val login = subCommand {
-        execute<Player> { sender, _, _ ->
-            startLogin(sender)
+        execute<Player> { player, _, _ ->
+            submit(async = true) {
+                startLogin(player)
+            }
         }
     }
-
+    
+    /**
+     * 检查命令 - 检查指定BV号是否完成一键三联
+     */
+    @CommandBody
+    val check = subCommand {
+        dynamic("bvid") {
+            execute<Player> { player, _, argument ->
+                val bvid = argument
+                submit(async = true) {
+                    checkTripleAction(player, bvid)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 状态命令 - 查看玩家绑定状态
+     */
     @CommandBody
     val status = subCommand {
-        execute<Player> { sender, _, _ ->
-            checkLoginStatus(sender)
+        execute<Player> { player, _, _ ->
+            submit(async = true) {
+                showPlayerStatus(player)
+            }
         }
     }
-
+    
+    /**
+     * 解绑命令 - 管理员解绑玩家账户
+     */
+    @CommandBody
+    val unbind = subCommand {
+        dynamic("player") {
+            execute<CommandSender> { sender, _, argument ->
+                if (!sender.hasPermission("bilibilipro.admin")) {
+                    sender.sendLang("noPermission")
+                    return@execute
+                }
+                
+                val targetPlayer = argument
+                submit(async = true) {
+                    unbindPlayer(sender, targetPlayer)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 插件信息命令
+     */
+    @CommandBody
+    val info = subCommand {
+        execute<CommandSender> { sender, _, _ ->
+            sender.sendLang("infoTitle")
+            sender.sendLang("infoVersion")
+            sender.sendLang("infoAuthor")
+            sender.sendLang("infoDescription")
+            sender.sendLang("infoInitialized", if (PluginManager.isInitialized()) "是" else "否")
+        }
+    }
+    
+    /**
+     * 重载配置命令
+     */
     @CommandBody
     val reload = subCommand {
         execute<CommandSender> { sender, _, _ ->
-            sender.sendMessage("&a正在重载插件配置...".colored())
-            // 这里可以添加重载逻辑
-            sender.sendMessage("&a配置重载完成！".colored())
+            if (!sender.hasPermission("bilibilipro.admin")) {
+                sender.sendLang("noPermission")
+                return@execute
+            }
+            
+            submit(async = true) {
+                try {
+                    config.reload()
+                    submit(async = false) {
+                        sender.sendLang("reloadSuccess")
+                    }
+                } catch (e: Exception) {
+                    submit(async = false) {
+                        sender.sendLang("reloadError", e.message ?: "Unknown error")
+                    }
+                }
+            }
         }
     }
-
+    
     /**
      * 开始登录流程
      */
     private fun startLogin(player: Player) {
-        val playerUUID = player.uniqueId
-
-        // 检查是否已经登录
-        if (apiClient.isLoggedIn()) {
-            player.sendMessage("&a您已经登录了哔哩哔哩账户！".colored())
-            player.sendMessage("&7使用 &e/bvp status &7查看登录详情".colored())
-            return
-        }
-
-        // 检查是否正在登录
-        if (loginInProgress.contains(playerUUID)) {
-            player.sendMessage("&c您已有正在进行的登录会话，请等待完成或重新尝试".colored())
-            return
-        }
-
-        player.sendMessage("&6&l========== 哔哩哔哩登录 ==========".colored())
-        player.sendMessage("&a正在获取登录二维码，请稍候...".colored())
-        loginInProgress.add(playerUUID)
-
-        // 使用TabooLib异步任务
-        submit(async = true) {
-            loginService.startQRCodeLogin(
-                onQRCodeGenerated = { qrData ->
-                    // 在主线程中创建地图物品
+        try {
+            // 检查是否已经绑定
+            val existingBinding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
+            if (existingBinding != null) {
+                submit(async = false) {
+                    player.sendLang("loginAlreadyBound", existingBinding.bilibiliUsername)
+                }
+                return
+            }
+            
+            // 检查是否已经在登录中
+            val existingSession = loginSessions[player.uniqueId.toString()]
+            if (existingSession != null) {
+                submit(async = false) {
+                    player.sendLang("loginAlreadyInProgress")
+                }
+                return
+            }
+            
+            val networkManager = BilibiliNetworkManager.getInstance()
+            
+            submit(async = false) {
+                player.sendLang("loginStarting")
+            }
+            
+            // 生成QR码
+            val qrResult = networkManager.qrCodeLogin.generateQRCode()
+            when (qrResult) {
+                is QRCodeResult.Success -> {
+                    val qrData = qrResult.data
+                    loginSessions[player.uniqueId.toString()] = qrData.qrcodeKey
+                    
+                    // 创建并给予QR码地图物品
+                    val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, "登录二维码")
                     submit(async = false) {
-                        val mapItem = MapItemHelper.createBilibiliLoginQRCodeMap(qrData.url, qrData.qrcodeKey)
                         player.inventory.addItem(mapItem)
-                        player.sendMessage("&a二维码已生成！".colored())
-                        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                        player.sendMessage("&e请查看您的物品栏中的地图物品".colored())
-                        player.sendMessage("&e使用哔哩哔哩手机APP扫描二维码进行登录".colored())
-                        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                        player.sendMessage("&7提示：使用 &a/bvp status &7检查登录状态".colored())
+                        player.sendLang("loginQRCodeGenerated")
                     }
-                },
-                onStatusChanged = { statusMessage ->
+                    
+                    // 开始轮询登录状态
+                    startLoginPolling(player, qrData.qrcodeKey)
+                }
+                is QRCodeResult.Error -> {
                     submit(async = false) {
-                        player.sendMessage("&6[登录状态] &e$statusMessage".colored())
-                    }
-                },
-                onLoginSuccess = {
-                    submit(async = false) {
-                        player.sendMessage("&6&l========== 登录成功 ==========".colored())
-                        player.sendMessage("&a恭喜！您已成功登录哔哩哔哩账户！".colored())
-                        player.sendMessage("&7现在您可以使用所有哔哩哔哩相关功能了".colored())
-                        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                        loginInProgress.remove(playerUUID)
-                    }
-                },
-                onError = { errorMessage ->
-                    submit(async = false) {
-                        player.sendMessage("&6&l========== 登录失败 ==========".colored())
-                        player.sendMessage("&c登录过程中发生错误：$errorMessage".colored())
-                        player.sendMessage("&7请稍后重试或联系管理员".colored())
-                        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
-                        loginInProgress.remove(playerUUID)
+                        player.sendLang("loginQRCodeFailed", qrResult.message)
                     }
                 }
-            )
+            }
+            
+        } catch (e: Exception) {
+            submit(async = false) {
+                player.sendLang("loginError", e.message ?: "Unknown error")
+            }
         }
     }
-
+    
     /**
-     * 检查玩家登录状态
+     * 开始轮询登录状态
      */
-    private fun checkLoginStatus(player: Player) {
-        val playerUUID = player.uniqueId
-        val isLoggedIn = apiClient.isLoggedIn()
-        val isLoginInProgress = loginInProgress.contains(playerUUID)
-
-        player.sendMessage("&6&l========== 登录状态 ==========".colored())
-        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
+    private fun startLoginPolling(player: Player, qrcodeKey: String) {
+        val networkManager = BilibiliNetworkManager.getInstance()
+        val checkInterval = config.getLong("login.check_interval", 2000)
+        val maxAttempts = config.getInt("login.max_check_attempts", 90)
         
-        if (isLoggedIn) {
-            player.sendMessage("&a✓ 哔哩哔哩账户：&2已登录".colored())
-            // 这里可以显示更多登录用户信息
-        } else {
-            player.sendMessage("&c✗ 哔哩哔哩账户：&4未登录".colored())
-            player.sendMessage("&7  使用 &e/bvp login &7进行登录".colored())
+        var attempts = 0
+        
+        fun checkLoginStatus() {
+            submit(async = true) {
+                attempts++
+                
+                if (attempts > maxAttempts) {
+                    loginSessions.remove(player.uniqueId.toString())
+                    submit(async = false) {
+                        player.sendLang("loginTimeout")
+                    }
+                    return@submit
+                }
+                
+                val statusResult = networkManager.qrCodeLogin.pollLoginStatus(qrcodeKey)
+                when (statusResult) {
+                    is LoginPollResult.Success -> {
+                        loginSessions.remove(player.uniqueId.toString())
+                        
+                        // 暂时简化处理，只显示成功消息
+                        submit(async = false) {
+                            player.sendLang("loginSuccess", "登录成功")
+                        }
+                    }
+                    is LoginPollResult.WaitingScan,
+                    is LoginPollResult.WaitingConfirm -> {
+                        // 继续等待
+                        submit(async = false, delay = checkInterval) {
+                            checkLoginStatus()
+                        }
+                    }
+                    is LoginPollResult.Expired -> {
+                        loginSessions.remove(player.uniqueId.toString())
+                        submit(async = false) {
+                            player.sendLang("loginExpired")
+                        }
+                    }
+                    is LoginPollResult.Error -> {
+                        loginSessions.remove(player.uniqueId.toString())
+                        submit(async = false) {
+                            player.sendLang("loginError", statusResult.message)
+                        }
+                    }
+                }
+            }
         }
         
-        if (isLoginInProgress) {
-            player.sendMessage("&e⏳ 登录进程：&6正在进行中".colored())
-            player.sendMessage("&7  请扫描二维码完成登录".colored())
-        } else {
-            player.sendMessage("&7⚪ 登录进程：&7无活动".colored())
+        // 开始第一次检查
+        submit(async = false, delay = checkInterval) {
+            checkLoginStatus()
+        }
+    }
+    
+    /**
+     * 检查一键三联状态
+     */
+    private fun checkTripleAction(player: Player, bvid: String) {
+        try {
+            // 检查玩家是否已绑定
+            val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
+            if (binding == null) {
+                submit(async = false) {
+                    player.sendLang("notBoundToBilibili")
+                }
+                return
+            }
+            
+            // 检查冷却时间
+            if (isOnCooldown(player, bvid)) {
+                return
+            }
+            
+            submit(async = false) {
+                player.sendLang("checkingTripleAction", bvid)
+            }
+            
+            val networkManager = BilibiliNetworkManager.getInstance()
+            val videoService = networkManager.videoInteraction
+            
+            // 检查一键三联状态
+            val tripleResult = videoService.getTripleActionStatus(bvid)
+            when (tripleResult) {
+                is TripleActionResult.Success -> {
+                    val status = tripleResult.status
+                    
+                    // 记录交互数据
+                    VideoInteractionService.recordInteraction(
+                        playerUuid = player.uniqueId.toString(),
+                        bvid = bvid,
+                        videoTitle = bvid, // 暂时使用bvid作为标题
+                        isLiked = status.isLiked,
+                        isCoined = status.isCoined,
+                        isFavorited = status.isFavorited
+                    )
+                    
+                    // 检查是否完成一键三联
+                    if (status.isLiked && status.isCoined && status.isFavorited) {
+                        submit(async = false) {
+                            player.sendLang("tripleActionCompleted", bvid)
+                        }
+                        
+                        // 设置冷却时间
+                        setCooldown(player, bvid)
+                        
+                        // 执行奖励脚本
+                        executeRewardScript(player)
+                    } else {
+                        submit(async = false) {
+                            player.sendLang("tripleActionIncomplete", 
+                                if (status.isLiked) "✓" else "✗",
+                                if (status.isCoined) "✓" else "✗",
+                                if (status.isFavorited) "✓" else "✗"
+                            )
+                        }
+                    }
+                }
+                is TripleActionResult.Error -> {
+                    submit(async = false) {
+                        player.sendLang("checkTripleActionFailed", tripleResult.message)
+                    }
+                }
+            }
+            
+        } catch (e: Exception) {
+            submit(async = false) {
+                player.sendLang("checkTripleActionError", e.message ?: "Unknown error")
+            }
+        }
+    }
+    
+    /**
+     * 检查冷却时间
+     */
+    private fun isOnCooldown(player: Player, bvid: String): Boolean {
+        val now = System.currentTimeMillis()
+        val playerUuid = player.uniqueId.toString()
+        
+        // 检查全局冷却
+        val globalCooldown = config.getInt("triple_action_rewards.cooldown.global", 300) * 1000
+        val lastGlobalTime = playerCooldowns[playerUuid] ?: 0
+        if (now - lastGlobalTime < globalCooldown) {
+            val remainingTime = (globalCooldown - (now - lastGlobalTime)) / 1000
+            submit(async = false) {
+                player.sendLang("globalCooldown", remainingTime)
+            }
+            return true
         }
         
-        player.sendMessage("&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━".colored())
+        // 检查视频冷却
+        val videoCooldown = config.getInt("triple_action_rewards.cooldown.per_video", 3600) * 1000
+        val videoKey = "${playerUuid}_${bvid}"
+        val lastVideoTime = videoCooldowns[videoKey] ?: 0
+        if (now - lastVideoTime < videoCooldown) {
+            val remainingTime = (videoCooldown - (now - lastVideoTime)) / 1000
+            submit(async = false) {
+                player.sendLang("videoCooldown", remainingTime)
+            }
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
+     * 设置冷却时间
+     */
+    private fun setCooldown(player: Player, bvid: String) {
+        val now = System.currentTimeMillis()
+        val playerUuid = player.uniqueId.toString()
+        val videoKey = "${playerUuid}_${bvid}"
+        
+        playerCooldowns[playerUuid] = now
+        videoCooldowns[videoKey] = now
+    }
+    
+    /**
+     * 执行奖励脚本
+     */
+    private fun executeRewardScript(player: Player) {
+        if (!config.getBoolean("triple_action_rewards.enabled", true)) {
+            return
+        }
+        
+        val script = config.getString("triple_action_rewards.reward_script", "") ?: return
+        if (script.isBlank()) return
+        
+        submit(async = false) {
+            try {
+                // 使用KetherHelper执行脚本
+                script.ketherEval(player as ProxyPlayer)
+            } catch (e: Exception) {
+                player.sendLang("scriptExecutionError", e.message ?: "Unknown error")
+            }
+        }
+    }
+    
+    /**
+     * 显示玩家状态
+     */
+    private fun showPlayerStatus(player: Player) {
+        try {
+            val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
+            if (binding == null) {
+                submit(async = false) {
+                    player.sendLang("notBoundToBilibili")
+                }
+                return
+            }
+            
+            // 获取交互记录统计
+            val stats = VideoInteractionService.getPlayerStatistics(player.uniqueId.toString())
+            
+            submit(async = false) {
+                player.sendLang("statusTitle")
+                player.sendLang("statusBoundAccount", binding.bilibiliUsername, binding.bilibiliUid)
+                player.sendLang("statusBindTime", binding.createdTime)
+                player.sendLang("statusLastLogin", binding.lastLoginTime ?: "从未")
+                player.sendLang("statusInteractionCount", stats.totalVideos)
+                player.sendLang("statusTripleActionCount", stats.tripleCompletedVideos)
+            }
+            
+        } catch (e: Exception) {
+            submit(async = false) {
+                player.sendLang("statusError", e.message ?: "Unknown error")
+            }
+        }
+    }
+    
+    /**
+     * 解绑玩家账户
+     */
+    private fun unbindPlayer(sender: CommandSender, targetPlayerName: String) {
+        try {
+            // 暂时不支持按玩家名解绑，因为findByPlayerName不存在
+            submit(async = false) {
+                sender.sendLang("unbindPlayerNotFound", targetPlayerName)
+            }
+            
+        } catch (e: Exception) {
+            submit(async = false) {
+                sender.sendLang("unbindError", e.message ?: "Unknown error")
+            }
+        }
     }
 }

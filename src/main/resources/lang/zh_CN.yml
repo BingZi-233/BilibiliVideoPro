@@ -7,6 +7,10 @@ activated: "激活完成"
 disable: "正在尝试进行禁用..."
 disabled: "禁用完成"
 
+# Kether
+KetherLocalizedException: "&c&l发生了Kether本地化异常, 异常信息: {0}"
+KetherThrowable: "&c&l发生了Kether异常, 异常信息: {0}"
+
 # PluginManager messages
 pluginInitializing: "正在初始化 BilibiliVideoPro..."
 pluginDatabaseSuccess: "数据库初始化成功"
@@ -24,3 +28,71 @@ pluginShutdownDatabaseClosed: "数据库连接已关闭"
 pluginShutdownSuccess: "BilibiliVideoPro 已完全关闭"
 pluginShutdownFailed: "关闭过程中发生异常: {0}"
 pluginReinitialize: "正在重新初始化插件..."
+
+# Command help messages
+commandHelpTitle: "&6&l========== BilibiliVideoPro 帮助 =========="
+commandHelpLogin: "&a/bvp login &7- &f登录哔哩哔哩账户"
+commandHelpCheck: "&a/bvp check <BV号> &7- &f检查视频一键三联状态"
+commandHelpStatus: "&a/bvp status &7- &f查看账户绑定状态"
+commandHelpInfo: "&a/bvp info &7- &f查看插件信息"
+commandHelpUnbind: "&a/bvp unbind <玩家> &7- &f解绑玩家账户 &c(管理员)"
+commandHelpReload: "&a/bvp reload &7- &f重载插件配置 &c(管理员)"
+
+# Permission messages
+noPermission: "&c您没有权限使用此命令！"
+
+# Login messages
+loginAlreadyBound: "&c您已绑定哔哩哔哩账户: &e{0}"
+loginAlreadyInProgress: "&c您已有正在进行的登录会话，请等待完成"
+networkNotInitialized: "&c网络管理器未初始化，请联系管理员"
+loginStarting: "&a正在开始登录流程..."
+loginQRCodeGenerated: "&a登录二维码已生成！请查看您的物品栏并使用哔哩哔哩APP扫描"
+loginQRCodeFailed: "&c生成登录二维码失败: {0}"
+loginError: "&c登录过程中发生错误: {0}"
+loginTimeout: "&c登录超时，请重新尝试"
+loginSuccess: "&a恭喜！成功绑定哔哩哔哩账户: &e{0}"
+loginExpired: "&c登录二维码已过期，请重新生成"
+
+# Triple action check messages
+notBoundToBilibili: "&c您尚未绑定哔哩哔哩账户，请使用 &e/bvp login &c进行绑定"
+checkingTripleAction: "&a正在检查视频 &e{0} &a的一键三联状态..."
+tripleActionCompleted: "&a&l恭喜！您已完成视频「&f{0}&a&l」的一键三联！"
+tripleActionIncomplete: "&e一键三联状态: 点赞 {0} | 投币 {1} | 收藏 {2}"
+checkTripleActionFailed: "&c检查一键三联状态失败: {0}"
+getVideoInfoFailed: "&c获取视频信息失败: {0}"
+checkTripleActionError: "&c检查一键三联时发生错误: {0}"
+
+# Cooldown messages
+globalCooldown: "&c您需要等待 &e{0} &c秒后才能再次检查"
+videoCooldown: "&c此视频需要等待 &e{0} &c秒后才能再次检查"
+
+# Status messages
+statusTitle: "&6&l========== 账户状态 =========="
+statusBoundAccount: "&a绑定账户: &f{0} &7(UID: {1})"
+statusLevel: "&a等级: &f{0}"
+statusVip: "&a大会员: &f{0}"
+statusBindTime: "&a绑定时间: &f{0}"
+statusLastLogin: "&a最后登录: &f{0}"
+statusInteractionCount: "&a总交互次数: &f{0}"
+statusTripleActionCount: "&a一键三联次数: &f{0}"
+statusError: "&c获取状态时发生错误: {0}"
+
+# Unbind messages
+unbindPlayerNotFound: "&c未找到玩家 &e{0} &c的绑定记录"
+unbindSuccess: "&a成功解绑玩家 &e{0} &a的哔哩哔哩账户 &f{1}"
+unbindFailed: "&c解绑玩家 &e{0} &c失败"
+unbindError: "&c解绑时发生错误: {0}"
+
+# Info messages
+infoTitle: "&6&l========== 插件信息 =========="
+infoVersion: "&a版本: &fBilibiliVideoPro 1.0.0"
+infoAuthor: "&a作者: &fBingZi-233"
+infoDescription: "&a描述: &f哔哩哔哩视频互动插件"
+infoInitialized: "&a初始化状态: &f{0}"
+
+# Configuration messages
+reloadSuccess: "&a配置重载成功！"
+reloadError: "&c配置重载失败: {0}"
+
+# Script execution messages
+scriptExecutionError: "&c奖励脚本执行失败: {0}"

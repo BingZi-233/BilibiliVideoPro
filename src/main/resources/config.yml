@@ -1,0 +1,44 @@
+# BilibiliVideoPro Configuration
+# 一键三联奖励配置
+triple_action_rewards:
+  enabled: true
+  # 当玩家完成一键三联时执行的Kether脚本
+  # 可用变量: player (玩家), bvid (BV号), video_title (视频标题), up_name (UP主名称)
+  reward_script: |
+    tell *"&a恭喜！您已完成一键三联！"
+    tell *"&7视频: &f{{ video_title }}"
+    tell *"&7UP主: &f{{ up_name }}"
+    give diamond 1
+    sound ENTITY_EXPERIENCE_ORB_PICKUP 1 1
+  
+  # 冷却时间设置 (秒)
+  cooldown:
+    enabled: true
+    # 每个BV号的冷却时间
+    per_video: 3600  # 1小时
+    # 每个玩家的全局冷却时间
+    global: 300      # 5分钟
+
+# 登录配置
+login:
+  # QR码过期时间 (秒)
+  qr_expire_time: 180
+  # 登录检查间隔 (毫秒)
+  check_interval: 2000
+  # 最大检查次数
+  max_check_attempts: 90
+
+# 一键三联检查配置
+triple_check:
+  # 检查超时时间 (秒)
+  timeout: 30
+  # 重试次数
+  max_retries: 3
+  # 重试间隔 (毫秒)
+  retry_interval: 1000
+
+# 调试配置
+debug:
+  enabled: false
+  log_api_requests: false
+  log_database_queries: false

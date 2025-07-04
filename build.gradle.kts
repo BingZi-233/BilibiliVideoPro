@@ -22,6 +22,7 @@ taboolib {
         install(BukkitNMSUtil)
         install(BukkitNMSItemTag)
         install(CommandHelper)
+        install(Kether)
     }
     description {
         name = "BilibiliVideoPro"
