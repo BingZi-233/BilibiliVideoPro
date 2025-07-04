@@ -13,6 +13,11 @@ KetherThrowable: "&c&l发生了Kether异常, 异常信息: {0}"
 
 # PluginManager messages
 pluginInitializing: "正在初始化 BilibiliVideoPro..."
+pluginSecurityInitialized: "安全密钥管理器初始化完成"
+pluginSecurityInitializationFailed: "安全密钥管理器初始化失败"
+pluginSecurityHealthy: "安全密钥管理器运行正常"
+pluginSecurityUnhealthy: "安全密钥管理器异常"
+pluginSecurityCleaned: "安全密钥管理器已清理"
 pluginDatabaseSuccess: "数据库初始化成功"
 pluginDatabaseFailed: "数据库初始化失败，插件功能可能无法正常使用"
 pluginDatabaseHealthy: "数据库连接正常"
@@ -38,6 +43,9 @@ commandHelpInfo: "&a/bvp info &7- &f查看插件信息"
 commandHelpGui: "&a/bvp gui &7- &f打开图形界面"
 commandHelpUnbind: "&a/bvp unbind <玩家> &7- &f解绑玩家账户 &c(管理员)"
 commandHelpReload: "&a/bvp reload &7- &f重载插件配置 &c(管理员)"
+commandHelpSystemStatus: "&a/bvp status admin &7- &f查看系统状态 &c(管理员)"
+commandHelpReport: "&a/bvp report &7- &f生成系统报告 &c(管理员)"
+commandHelpCleanStats: "&a/bvp clean stats &7- &f清理系统统计 &c(管理员)"
 
 # GUI related messages
 guiMainMenuTitle: "&6&lBilibiliVideoPro &f- 主菜单"
@@ -82,6 +90,7 @@ achievementTripleStart: "&7☆☆☆ 开始三联之旅"
 # Login messages
 loginAlreadyBound: "&c您已绑定哔哩哔哩账户: &e{0}"
 loginAlreadyInProgress: "&c您已有正在进行的登录会话，请等待完成"
+loginCancelled: "&7已取消之前的登录会话，正在开始新的登录"
 networkNotInitialized: "&c网络管理器未初始化，请联系管理员"
 loginStarting: "&a正在开始登录流程..."
 loginQRCodeGenerated: "&a登录二维码已生成！请查看您的物品栏并使用哔哩哔哩APP扫描"
@@ -131,6 +140,11 @@ infoInitialized: "&a初始化状态: &f{0}"
 # Configuration messages
 reloadSuccess: "&a配置重载成功！"
 reloadError: "&c配置重载失败: {0}"
+
+# Error and validation messages
+noPermission: "&c您没有权限执行此命令"
+systemError: "&c系统错误: {0}"
+invalidBvid: "&c无效的BV号: {0}"
 
 # Script execution messages
 scriptExecutionError: "&c奖励脚本执行失败: {0}"

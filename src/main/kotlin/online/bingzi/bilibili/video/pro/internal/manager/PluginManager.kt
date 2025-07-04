@@ -3,9 +3,11 @@ package online.bingzi.bilibili.video.pro.internal.manager
 import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
 import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
+import online.bingzi.bilibili.video.pro.internal.security.SecureKeyManager
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
+import taboolib.common.platform.function.getDataFolder
 import taboolib.module.lang.sendLang
 
 /**
@@ -28,22 +30,29 @@ object PluginManager {
         console().sendLang("pluginInitializing")
         
         try {
-            // 初始化数据库
-            if (DatabaseManager.initialize()) {
-                console().sendLang("pluginDatabaseSuccess")
+            // 初始化安全密钥管理器
+            if (SecureKeyManager.initialize(getDataFolder())) {
+                console().sendLang("pluginSecurityInitialized")
                 
-                // 初始化网络管理器
-                BilibiliNetworkManager.getInstance().initialize()
-                console().sendLang("pluginNetworkInitialized")
-                
-                // 初始化GUI管理器
-                GuiManager.initialize()
-                
-                isInitialized = true
-                console().sendLang("pluginInitializationSuccess")
-                
+                // 初始化数据库
+                if (DatabaseManager.initialize()) {
+                    console().sendLang("pluginDatabaseSuccess")
+                    
+                    // 初始化网络管理器
+                    BilibiliNetworkManager.getInstance().initialize()
+                    console().sendLang("pluginNetworkInitialized")
+                    
+                    // 初始化GUI管理器
+                    GuiManager.initialize()
+                    
+                    isInitialized = true
+                    console().sendLang("pluginInitializationSuccess")
+                    
+                } else {
+                    console().sendLang("pluginDatabaseFailed")
+                }
             } else {
-                console().sendLang("pluginDatabaseFailed")
+                console().sendLang("pluginSecurityInitializationFailed")
             }
             
         } catch (e: Exception) {
@@ -63,6 +72,13 @@ object PluginManager {
         }
         
         try {
+            // 执行密钥管理器完整性检查
+            if (SecureKeyManager.verifyKeyIntegrity()) {
+                console().sendLang("pluginSecurityHealthy")
+            } else {
+                console().sendLang("pluginSecurityUnhealthy")
+            }
+            
             // 执行数据库健康检查
             val healthInfo = DatabaseManager.healthCheck()
             if (healthInfo.isHealthy) {
@@ -95,6 +111,10 @@ object PluginManager {
             // 关闭数据库连接
             DatabaseManager.close()
             console().sendLang("pluginShutdownDatabaseClosed")
+            
+            // 清理安全密钥管理器
+            SecureKeyManager.cleanup()
+            console().sendLang("pluginSecurityCleaned")
             
             isInitialized = false
             console().sendLang("pluginShutdownSuccess")

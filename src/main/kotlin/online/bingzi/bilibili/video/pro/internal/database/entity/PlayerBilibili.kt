@@ -3,6 +3,8 @@ package online.bingzi.bilibili.video.pro.internal.database.entity
 import com.j256.ormlite.field.DatabaseField
 import com.j256.ormlite.table.DatabaseTable
 import online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig
+import online.bingzi.bilibili.video.pro.internal.security.CookieEncryption
+import online.bingzi.bilibili.video.pro.internal.security.SecureKeyManager
 import java.util.*
 
 /**
@@ -52,25 +54,25 @@ data class PlayerBilibili(
     @DatabaseField(columnName = IS_VIP, canBeNull = false)
     var isVip: Boolean = false,
     /**
-     * SESSDATA Cookie
+     * SESSDATA Cookie (加密存储)
      */
-    @DatabaseField(columnName = SESSDATA, canBeNull = false, width = 500)
-    var sessdata: String = "",
+    @DatabaseField(columnName = SESSDATA, canBeNull = false, width = 1000)
+    var encryptedSessdata: String = "",
     /**
-     * bili_jct Cookie
+     * bili_jct Cookie (加密存储)
      */
-    @DatabaseField(columnName = BILI_JCT, canBeNull = false, width = 100)
-    var biliJct: String = "",
+    @DatabaseField(columnName = BILI_JCT, canBeNull = false, width = 500)
+    var encryptedBiliJct: String = "",
     /**
-     * DedeUserID Cookie
+     * DedeUserID Cookie (加密存储)
      */
-    @DatabaseField(columnName = DEDE_USER_ID, canBeNull = false, width = 50)
-    var dedeUserId: String = "",
+    @DatabaseField(columnName = DEDE_USER_ID, canBeNull = false, width = 200)
+    var encryptedDedeUserId: String = "",
     /**
-     * DedeUserID__ckMd5 Cookie
+     * DedeUserID__ckMd5 Cookie (加密存储)
      */
-    @DatabaseField(columnName = DEDE_USER_ID_MD5, canBeNull = false, width = 50)
-    var dedeUserIdMd5: String = "",
+    @DatabaseField(columnName = DEDE_USER_ID_MD5, canBeNull = false, width = 200)
+    var encryptedDedeUserIdMd5: String = "",
     /**
      * 创建时间
      */
@@ -139,13 +141,12 @@ data class PlayerBilibili(
         playerName = playerName,
         bilibiliUid = bilibiliUid,
         bilibiliUsername = bilibiliUsername,
-        sessdata = sessdata,
-        biliJct = biliJct,
-        dedeUserId = dedeUserId,
-        dedeUserIdMd5 = dedeUserIdMd5,
         createdTime = Date(),
         updatedTime = Date()
-    )
+    ) {
+        // 加密敏感Cookie数据
+        setCookies(sessdata, biliJct, dedeUserId, dedeUserIdMd5)
+    }
 
     /**
      * 更新Bilibili用户信息
@@ -164,7 +165,7 @@ data class PlayerBilibili(
     }
 
     /**
-     * 更新Cookie信息
+     * 更新Cookie信息（加密存储）
      */
     fun updateCookies(
         sessdata: String,
@@ -172,34 +173,102 @@ data class PlayerBilibili(
         dedeUserId: String,
         dedeUserIdMd5: String
     ) {
-        this.sessdata = sessdata
-        this.biliJct = biliJct
-        this.dedeUserId = dedeUserId
-        this.dedeUserIdMd5 = dedeUserIdMd5
+        setCookies(sessdata, biliJct, dedeUserId, dedeUserIdMd5)
         this.updatedTime = Date()
         this.lastLoginTime = Date()
     }
+    
+    /**
+     * 设置Cookie（加密存储）
+     */
+    private fun setCookies(
+        sessdata: String,
+        biliJct: String,
+        dedeUserId: String,
+        dedeUserIdMd5: String
+    ) {
+        try {
+            val encryptionKey = SecureKeyManager.getEncryptionKey()
+            this.encryptedSessdata = CookieEncryption.encrypt(sessdata, encryptionKey)
+            this.encryptedBiliJct = CookieEncryption.encrypt(biliJct, encryptionKey)
+            this.encryptedDedeUserId = CookieEncryption.encrypt(dedeUserId, encryptionKey)
+            this.encryptedDedeUserIdMd5 = CookieEncryption.encrypt(dedeUserIdMd5, encryptionKey)
+        } catch (e: Exception) {
+            throw SecurityException("无法加密Cookie数据: ${e.message}", e)
+        }
+    }
 
     /**
-     * 获取Cookie映射
+     * 获取Cookie映射（解密）
      */
     fun getCookieMap(): Map<String, String> {
-        return mapOf(
-            "SESSDATA" to sessdata,
-            "bili_jct" to biliJct,
-            "DedeUserID" to dedeUserId,
-            "DedeUserID__ckMd5" to dedeUserIdMd5
-        )
+        return try {
+            val encryptionKey = SecureKeyManager.getEncryptionKey()
+            mapOf(
+                "SESSDATA" to CookieEncryption.decrypt(encryptedSessdata, encryptionKey),
+                "bili_jct" to CookieEncryption.decrypt(encryptedBiliJct, encryptionKey),
+                "DedeUserID" to CookieEncryption.decrypt(encryptedDedeUserId, encryptionKey),
+                "DedeUserID__ckMd5" to CookieEncryption.decrypt(encryptedDedeUserIdMd5, encryptionKey)
+            )
+        } catch (e: Exception) {
+            throw SecurityException("无法解密Cookie数据: ${e.message}", e)
+        }
     }
+    
+    /**
+     * 获取SESSDATA（解密）
+     */
+    val sessdata: String
+        get() = try {
+            CookieEncryption.decrypt(encryptedSessdata, SecureKeyManager.getEncryptionKey())
+        } catch (e: Exception) {
+            throw SecurityException("无法解密SESSDATA: ${e.message}", e)
+        }
+    
+    /**
+     * 获取bili_jct（解密）
+     */
+    val biliJct: String
+        get() = try {
+            CookieEncryption.decrypt(encryptedBiliJct, SecureKeyManager.getEncryptionKey())
+        } catch (e: Exception) {
+            throw SecurityException("无法解密bili_jct: ${e.message}", e)
+        }
+    
+    /**
+     * 获取DedeUserID（解密）
+     */
+    val dedeUserId: String
+        get() = try {
+            CookieEncryption.decrypt(encryptedDedeUserId, SecureKeyManager.getEncryptionKey())
+        } catch (e: Exception) {
+            throw SecurityException("无法解密DedeUserID: ${e.message}", e)
+        }
+    
+    /**
+     * 获取DedeUserID__ckMd5（解密）
+     */
+    val dedeUserIdMd5: String
+        get() = try {
+            CookieEncryption.decrypt(encryptedDedeUserIdMd5, SecureKeyManager.getEncryptionKey())
+        } catch (e: Exception) {
+            throw SecurityException("无法解密DedeUserID__ckMd5: ${e.message}", e)
+        }
 
     /**
      * 检查Cookie是否完整
      */
     fun hasValidCookies(): Boolean {
-        return sessdata.isNotEmpty() &&
-                biliJct.isNotEmpty() &&
-                dedeUserId.isNotEmpty() &&
-                dedeUserIdMd5.isNotEmpty()
+        return try {
+            encryptedSessdata.isNotEmpty() &&
+                    encryptedBiliJct.isNotEmpty() &&
+                    encryptedDedeUserId.isNotEmpty() &&
+                    encryptedDedeUserIdMd5.isNotEmpty() &&
+                    // 尝试解密验证数据完整性
+                    getCookieMap().values.all { it.isNotEmpty() }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     /**

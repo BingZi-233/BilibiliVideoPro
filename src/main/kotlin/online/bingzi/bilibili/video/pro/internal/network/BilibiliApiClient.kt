@@ -7,6 +7,9 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.ApiResponse
+import online.bingzi.bilibili.video.pro.internal.error.ErrorHandler
+import taboolib.common.platform.function.console
+import taboolib.module.lang.sendInfo
 import java.util.concurrent.TimeUnit
 
 /**
@@ -114,21 +117,100 @@ class BilibiliApiClient {
     }
     
     /**
-     * 执行请求
+     * 执行请求（带重试机制）
      */
     private fun executeRequest(request: Request): ApiResponse {
-        return try {
-            val response = okHttpClient.newCall(request).execute()
-            val responseBody = response.body?.string() ?: ""
-            
-            if (response.isSuccessful) {
-                ApiResponse.success(responseBody)
-            } else {
-                ApiResponse.error("HTTP ${response.code}: ${response.message}")
+        return executeRequestWithRetry(request, maxRetries = 3)
+    }
+    
+    /**
+     * 执行请求（带重试机制）
+     */
+    private fun executeRequestWithRetry(request: Request, maxRetries: Int): ApiResponse {
+        var lastException: Exception? = null
+        
+        repeat(maxRetries) { attempt ->
+            try {
+                console().sendInfo("执行网络请求 (尝试 ${attempt + 1}/$maxRetries): ${request.url}")
+                
+                val response = okHttpClient.newCall(request).execute()
+                val responseBody = response.body?.string() ?: ""
+                
+                if (response.isSuccessful) {
+                    console().sendInfo("网络请求成功: ${request.url}")
+                    return ApiResponse.success(responseBody)
+                } else {
+                    val errorMsg = "HTTP ${response.code}: ${response.message}"
+                    console().sendInfo("网络请求失败: $errorMsg")
+                    
+                    // 如果是客户端错误（4xx），不重试
+                    if (response.code in 400..499) {
+                        ErrorHandler.handleError(
+                            type = ErrorHandler.ErrorType.NETWORK,
+                            component = "BilibiliApiClient",
+                            operation = "executeRequest",
+                            exception = Exception(errorMsg),
+                            metadata = mapOf(
+                                "url" to request.url.toString(),
+                                "method" to request.method,
+                                "status_code" to response.code,
+                                "attempt" to attempt + 1
+                            )
+                        )
+                        return ApiResponse.error(errorMsg)
+                    }
+                    
+                    lastException = Exception(errorMsg)
+                }
+                
+            } catch (e: Exception) {
+                lastException = e
+                console().sendInfo("网络请求异常 (尝试 ${attempt + 1}/$maxRetries): ${e.message}")
+                
+                // 记录错误但继续重试
+                ErrorHandler.handleError(
+                    type = ErrorHandler.ErrorType.NETWORK,
+                    component = "BilibiliApiClient",
+                    operation = "executeRequest",
+                    exception = e,
+                    metadata = mapOf(
+                        "url" to request.url.toString(),
+                        "method" to request.method,
+                        "attempt" to attempt + 1,
+                        "max_retries" to maxRetries
+                    ),
+                    shouldRetry = attempt < maxRetries - 1
+                )
+                
+                // 如果不是最后一次尝试，等待后重试
+                if (attempt < maxRetries - 1) {
+                    try {
+                        Thread.sleep((1000 * (attempt + 1)).toLong()) // 递增延迟
+                    } catch (ie: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        return@repeat
+                    }
+                }
             }
-        } catch (e: Exception) {
-            ApiResponse.error("Request failed: ${e.message}")
         }
+        
+        // 所有重试都失败了
+        val finalError = lastException ?: Exception("Unknown network error")
+        console().sendInfo("网络请求最终失败: ${finalError.message}")
+        
+        ErrorHandler.handleError(
+            type = ErrorHandler.ErrorType.NETWORK,
+            component = "BilibiliApiClient", 
+            operation = "executeRequest",
+            exception = finalError,
+            metadata = mapOf(
+                "url" to request.url.toString(),
+                "method" to request.method,
+                "final_failure" to true
+            )
+        )
+        
+        return ApiResponse.error("Request failed after $maxRetries attempts: ${finalError.message}")
     }
     
     /**

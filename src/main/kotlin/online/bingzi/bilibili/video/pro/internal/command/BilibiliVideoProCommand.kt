@@ -13,6 +13,8 @@ import online.bingzi.bilibili.video.pro.internal.network.auth.QRCodeLoginService
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.*
+import online.bingzi.bilibili.video.pro.internal.validation.InputValidator
+import online.bingzi.bilibili.video.pro.internal.monitor.SystemMonitor
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.ProxyPlayer
 import taboolib.module.configuration.Config
@@ -35,8 +37,8 @@ object BilibiliVideoProCommand {
     private val playerCooldowns = ConcurrentHashMap<String, Long>()
     private val videoCooldowns = ConcurrentHashMap<String, Long>()
     
-    // 正在进行的登录会话
-    private val loginSessions = ConcurrentHashMap<String, String>()
+    // 正在进行的登录会话 - 简化版本，不追踪任务引用
+    private val loginSessions = ConcurrentHashMap<String, String>() // playerUuid -> qrcodeKey
     
     /**
      * 主命令 - 显示帮助信息
@@ -53,6 +55,9 @@ object BilibiliVideoProCommand {
             if (sender.hasPermission("bilibilipro.admin")) {
                 sender.sendLang("commandHelpUnbind")
                 sender.sendLang("commandHelpReload")
+                sender.sendLang("commandHelpSystemStatus")
+                sender.sendLang("commandHelpReport")
+                sender.sendLang("commandHelpCleanStats")
             }
         }
     }
@@ -169,10 +174,49 @@ object BilibiliVideoProCommand {
     }
     
     /**
-     * 重载配置命令
+     * 系统状态命令 - 管理员查看系统状态
      */
     @CommandBody
-    val reload = subCommand {
+    val status_admin = subCommand {
+        literal("admin") {
+            execute<CommandSender> { sender, _, _ ->
+                if (!sender.hasPermission("bilibilipro.admin")) {
+                    sender.sendLang("noPermission")
+                    return@execute
+                }
+                
+                submit(async = true) {
+                    val healthStatus = SystemMonitor.getHealthStatus()
+                    val performanceStats = SystemMonitor.getPerformanceStats()
+                    
+                    submit(async = false) {
+                        sender.sendMessage("§6=== BilibiliVideoPro 系统状态 ===")
+                        sender.sendMessage("§a总体状态: §f${healthStatus.overall.name}")
+                        sender.sendMessage("§a数据库: §f${healthStatus.database.name}")
+                        sender.sendMessage("§a安全系统: §f${healthStatus.security.name}")
+                        sender.sendMessage("§a网络: §f${healthStatus.network.name}")
+                        sender.sendMessage("§a内存: §f${healthStatus.memory.name}")
+                        sender.sendMessage("§a运行时间: §f${performanceStats.uptime / 1000}秒")
+                        sender.sendMessage("§a内存使用: §f${String.format("%.2f", performanceStats.memoryUsage.usagePercentage)}%")
+                        
+                        if (performanceStats.requestCounts.isNotEmpty()) {
+                            sender.sendMessage("§a请求统计:")
+                            performanceStats.requestCounts.forEach { (operation, count) ->
+                                val avgTime = performanceStats.averageExecutionTimes[operation] ?: 0.0
+                                sender.sendMessage("  §7$operation: §f$count 次, 平均: ${String.format("%.2f", avgTime)}ms")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * 系统报告命令 - 生成详细报告
+     */
+    @CommandBody
+    val report = subCommand {
         execute<CommandSender> { sender, _, _ ->
             if (!sender.hasPermission("bilibilipro.admin")) {
                 sender.sendLang("noPermission")
@@ -180,15 +224,35 @@ object BilibiliVideoProCommand {
             }
             
             submit(async = true) {
-                try {
-                    config.reload()
-                    online.bingzi.bilibili.video.pro.internal.gui.GuiManager.reloadGuiConfig()
-                    submit(async = false) {
-                        sender.sendLang("reloadSuccess")
+                val report = SystemMonitor.generateSystemReport()
+                
+                submit(async = false) {
+                    report.lines().forEach { line ->
+                        sender.sendMessage(line)
                     }
-                } catch (e: Exception) {
+                }
+            }
+        }
+    }
+    
+    /**
+     * 清理统计命令
+     */
+    @CommandBody
+    val clean = subCommand {
+        literal("stats") {
+            execute<CommandSender> { sender, _, _ ->
+                if (!sender.hasPermission("bilibilipro.admin")) {
+                    sender.sendLang("noPermission")
+                    return@execute
+                }
+                
+                submit(async = true) {
+                    SystemMonitor.clearStatistics()
+                    online.bingzi.bilibili.video.pro.internal.error.ErrorHandler.clearErrorStatistics()
+                    
                     submit(async = false) {
-                        sender.sendLang("reloadError", e.message ?: "Unknown error")
+                        sender.sendMessage("§a系统统计数据已清理")
                     }
                 }
             }
@@ -222,10 +286,11 @@ object BilibiliVideoProCommand {
             // 检查是否已经在登录中
             val existingSession = loginSessions[player.uniqueId.toString()]
             if (existingSession != null) {
+                // 移除现有会话
+                loginSessions.remove(player.uniqueId.toString())
                 submit(async = false) {
-                    player.sendLang("loginAlreadyInProgress")
+                    player.sendLang("loginCancelled")
                 }
-                return
             }
             
             val networkManager = BilibiliNetworkManager.getInstance()
@@ -239,7 +304,6 @@ object BilibiliVideoProCommand {
             when (qrResult) {
                 is QRCodeResult.Success -> {
                     val qrData = qrResult.data
-                    loginSessions[player.uniqueId.toString()] = qrData.qrcodeKey
                     
                     // 创建并给予QR码地图物品
                     val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, "登录二维码")
@@ -272,6 +336,10 @@ object BilibiliVideoProCommand {
         val networkManager = BilibiliNetworkManager.getInstance()
         val checkInterval = config.getLong("login.check_interval", 2000)
         val maxAttempts = config.getInt("login.max_check_attempts", 90)
+        val playerUuid = player.uniqueId.toString()
+        
+        // 注册登录会话
+        loginSessions[playerUuid] = qrcodeKey
         
         var attempts = 0
         
@@ -279,18 +347,27 @@ object BilibiliVideoProCommand {
             submit(async = true) {
                 attempts++
                 
+                // 检查是否已经超时
                 if (attempts > maxAttempts) {
-                    loginSessions.remove(player.uniqueId.toString())
+                    // 清理会话
+                    loginSessions.remove(playerUuid)
+                    
                     submit(async = false) {
                         player.sendLang("loginTimeout")
                     }
                     return@submit
                 }
                 
+                // 检查会话是否仍然存在（可能被取消）
+                if (!loginSessions.containsKey(playerUuid)) {
+                    return@submit
+                }
+                
                 val statusResult = networkManager.qrCodeLogin.pollLoginStatus(qrcodeKey)
                 when (statusResult) {
                     is LoginPollResult.Success -> {
-                        loginSessions.remove(player.uniqueId.toString())
+                        // 清理会话
+                        loginSessions.remove(playerUuid)
                         
                         // 暂时简化处理，只显示成功消息
                         submit(async = false) {
@@ -299,19 +376,26 @@ object BilibiliVideoProCommand {
                     }
                     is LoginPollResult.WaitingScan,
                     is LoginPollResult.WaitingConfirm -> {
-                        // 继续等待
-                        submit(async = false, delay = checkInterval) {
-                            checkLoginStatus()
+                        // 检查会话是否仍然存在（可能被取消）
+                        if (loginSessions.containsKey(playerUuid)) {
+                            // 继续等待
+                            submit(async = false, delay = checkInterval) {
+                                checkLoginStatus()
+                            }
                         }
                     }
                     is LoginPollResult.Expired -> {
-                        loginSessions.remove(player.uniqueId.toString())
+                        // 清理会话
+                        loginSessions.remove(playerUuid)
+                        
                         submit(async = false) {
                             player.sendLang("loginExpired")
                         }
                     }
                     is LoginPollResult.Error -> {
-                        loginSessions.remove(player.uniqueId.toString())
+                        // 清理会话
+                        loginSessions.remove(playerUuid)
+                        
                         submit(async = false) {
                             player.sendLang("loginError", statusResult.message)
                         }
@@ -331,6 +415,23 @@ object BilibiliVideoProCommand {
      */
     private fun checkTripleAction(player: Player, bvid: String) {
         try {
+            // 验证输入参数
+            val bvidValidation = InputValidator.validateBvid(bvid)
+            if (!bvidValidation.isValid) {
+                submit(async = false) {
+                    player.sendLang("invalidBvid", bvidValidation.errorMessage ?: "BV号格式错误")
+                }
+                return
+            }
+            
+            val uuidValidation = InputValidator.validatePlayerUuid(player.uniqueId.toString())
+            if (!uuidValidation.isValid) {
+                submit(async = false) {
+                    player.sendLang("systemError", "玩家UUID验证失败")
+                }
+                return
+            }
+            
             // 检查玩家是否已绑定
             val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
             if (binding == null) {
