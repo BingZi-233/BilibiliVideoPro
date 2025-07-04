@@ -24,6 +24,16 @@ taboolib {
         install(CommandHelper)
         install(Kether)
     }
+    
+    // 依赖重定向配置 - 将第三方库重定向到项目专用包名下
+    relocate("com.squareup.okhttp3", "online.bingzi.bilibili.video.pro.libs.okhttp3")
+    relocate("com.squareup.okio", "online.bingzi.bilibili.video.pro.libs.okio")
+    relocate("com.google.code.gson", "online.bingzi.bilibili.video.pro.libs.gson")
+    relocate("com.j256.ormlite", "online.bingzi.bilibili.video.pro.libs.ormlite")
+    relocate("com.zaxxer.hikari", "online.bingzi.bilibili.video.pro.libs.hikari")
+    relocate("com.google.zxing", "online.bingzi.bilibili.video.pro.libs.zxing")
+    relocate("com.mysql", "online.bingzi.bilibili.video.pro.libs.mysql")
+
     description {
         name = "BilibiliVideoPro"
         contributors {
@@ -52,27 +62,27 @@ dependencies {
     compileOnly(fileTree("libs"))
 
     // HTTP客户端 - OkHttp
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    taboo("com.squareup.okhttp3:okhttp:4.12.0")
 
     // JSON处理 - Gson (轻量级，与OkHttp配合好)
-    implementation("com.google.code.gson:gson:2.10.1")
+    taboo("com.google.code.gson:gson:2.10.1")
 
     // 可选：OkHttp日志拦截器 (用于调试)
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    taboo("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // ORM数据库持久化 - ORMLite
-    implementation("com.j256.ormlite:ormlite-core:6.1")
-    implementation("com.j256.ormlite:ormlite-jdbc:6.1")
+    taboo("com.j256.ormlite:ormlite-core:6.1")
+    taboo("com.j256.ormlite:ormlite-jdbc:6.1")
 
     // 数据库驱动
-    implementation("org.xerial:sqlite-jdbc:3.44.1.0")    // SQLite驱动
-    implementation("mysql:mysql-connector-java:8.0.33")  // MySQL驱动
+    taboo("org.xerial:sqlite-jdbc:3.44.1.0")    // SQLite驱动
+    taboo("mysql:mysql-connector-java:8.0.33")  // MySQL驱动
 
     // 连接池
-    implementation("com.zaxxer:HikariCP:5.1.0")
+    taboo("com.zaxxer:HikariCP:5.1.0")
 
     // 二维码生成库
-    implementation("com.google.zxing:core:3.5.2")
+    taboo("com.google.zxing:core:3.5.2")
 
     // ProtocolLib for packet handling
     implementation("com.comphenix.protocol:ProtocolLib:5.3.0")

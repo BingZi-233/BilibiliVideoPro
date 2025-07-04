@@ -418,10 +418,17 @@ src/main/kotlin/online/bingzi/bilibili/video/pro/internal/
 
 ### 🧩 核心依赖
 - **TabooLib 6.2.3**: 插件框架
+- **OkHttp3 4.12.0**: HTTP客户端 (重定向至 `online.bingzi.bilibili.video.pro.libs.okhttp3`)
+- **ORMLite 6.1**: ORM数据库 (重定向至 `online.bingzi.bilibili.video.pro.libs.ormlite`)
+- **HikariCP 5.1.0**: 数据库连接池 (重定向至 `online.bingzi.bilibili.video.pro.libs.hikari`)
+- **Google ZXing 3.5.2**: 二维码生成 (重定向至 `online.bingzi.bilibili.video.pro.libs.zxing`)
+- **Gson 2.10.1**: JSON处理 (重定向至 `online.bingzi.bilibili.video.pro.libs.gson`)
 - **OkHttp3 4.12.0**: HTTP客户端
 - **ORMLite**: ORM数据库
 - **Google ZXing**: 二维码生成
 - **ProtocolLib**: 数据包处理
+
+> **依赖隔离**: 所有第三方依赖都通过TabooLib的relocate功能重定向到项目专用包名下，避免与其他插件的依赖冲突。
 
 ### 🏗️ 构建项目
 ```bash
@@ -435,6 +442,27 @@ cd BilibiliVideoPro
 # 输出文件位置
 # build/libs/BilibiliVideoPro-*.jar
 ```
+
+### ⚙️ 依赖管理配置
+
+项目使用TabooLib的依赖重定向功能，将所有第三方库隔离到专用包名下：
+
+```kotlin
+// build.gradle.kts 中的依赖重定向配置
+relocate("com.squareup.okhttp3", "online.bingzi.bilibili.video.pro.libs.okhttp3")
+relocate("com.squareup.okio", "online.bingzi.bilibili.video.pro.libs.okio")
+relocate("com.google.code.gson", "online.bingzi.bilibili.video.pro.libs.gson")
+relocate("com.j256.ormlite", "online.bingzi.bilibili.video.pro.libs.ormlite")
+relocate("com.zaxxer.hikari", "online.bingzi.bilibili.video.pro.libs.hikari")
+relocate("com.google.zxing", "online.bingzi.bilibili.video.pro.libs.zxing")
+// ... 更多依赖重定向
+```
+
+**优势**:
+- 🛡️ **依赖隔离**: 避免与其他插件的依赖版本冲突
+- 📦 **独立运行**: 插件可以独立运行，不依赖服务器环境中的其他库
+- 🔧 **版本控制**: 可以使用特定版本的依赖库，确保功能稳定性
+- 🚀 **性能优化**: 减少类加载冲突，提升插件性能
 
 ---
 
