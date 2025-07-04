@@ -21,6 +21,7 @@ taboolib {
         install(BukkitNMS)
         install(BukkitNMSUtil)
         install(BukkitNMSItemTag)
+        install(CommandHelper)
     }
     description {
         name = "BilibiliVideoPro"
@@ -36,7 +37,6 @@ taboolib {
 
 repositories {
     mavenCentral()
-    maven("https://sacredcraft.cn:8081/repository/public/")
     maven("https://repo.dmulloy2.net/repository/public/") // ProtocolLib repository
 }
 
@@ -70,7 +70,7 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
 
     // ProtocolLib for packet handling
-    implementation("com.comphenix.protocol:ProtocolLib:4.8.0")
+    implementation("com.comphenix.protocol:ProtocolLib:5.3.0")
 }
 
 tasks.withType<JavaCompile> {
