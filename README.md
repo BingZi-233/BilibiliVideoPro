@@ -614,7 +614,9 @@ src/main/kotlin/online/bingzi/bilibili/video/pro/internal/
 ├── database/         # 数据库相关
 ├── network/          # 网络API
 ├── helper/           # 工具类
-└── manager/          # 管理器
+├── manager/          # 管理器
+├── cache/            # 缓存管理
+└── security/         # 安全过滤
 ```
 
 ### 🧩 核心依赖
@@ -624,10 +626,21 @@ src/main/kotlin/online/bingzi/bilibili/video/pro/internal/
 - **HikariCP 5.1.0**: 数据库连接池 (重定向至 `online.bingzi.bilibili.video.pro.libs.hikari`)
 - **Google ZXing 3.5.2**: 二维码生成 (重定向至 `online.bingzi.bilibili.video.pro.libs.zxing`)
 - **Gson 2.10.1**: JSON处理 (重定向至 `online.bingzi.bilibili.video.pro.libs.gson`)
-- **OkHttp3 4.12.0**: HTTP客户端
-- **ORMLite**: ORM数据库
-- **Google ZXing**: 二维码生成
 - **ProtocolLib**: 数据包处理
+
+### 🔧 核心功能模块
+
+#### 缓存管理系统
+- **自动清理**: 每5分钟自动清理过期缓存，防止内存泄漏
+- **多类型缓存**: 支持玩家冷却、视频冷却、登录会话缓存
+- **智能过期**: 不同类型缓存有不同的过期时间策略
+- **统计监控**: 实时统计缓存使用情况和内存占用
+
+#### 安全过滤系统
+- **敏感信息过滤**: 自动过滤日志中的Cookie、密码、Token等敏感数据
+- **环境适配**: 生产环境严格过滤，开发环境温和过滤
+- **智能识别**: 正则表达式匹配多种敏感信息模式
+- **异常安全**: 堆栈跟踪和错误消息的安全处理
 
 > **依赖隔离**: 所有第三方依赖都通过TabooLib的relocate功能重定向到项目专用包名下，避免与其他插件的依赖冲突。
 
@@ -664,6 +677,20 @@ relocate("com.google.zxing", "online.bingzi.bilibili.video.pro.libs.zxing")
 - 📦 **独立运行**: 插件可以独立运行，不依赖服务器环境中的其他库
 - 🔧 **版本控制**: 可以使用特定版本的依赖库，确保功能稳定性
 - 🚀 **性能优化**: 减少类加载冲突，提升插件性能
+
+---
+
+## 📚 项目文档
+
+### 📋 核心文档
+- **[项目地图](docs/PROJECT_MAP.md)** - 完整的项目结构和模块导航
+- **[开发指南](CLAUDE.md)** - Claude Code 开发规范和最佳实践
+
+### 📖 技术文档
+- **[网络使用指南](docs/NETWORK_USAGE.md)** - Bilibili API 集成说明
+- **[数据库使用指南](docs/DATABASE_USAGE.md)** - 数据库配置和操作
+- **[辅助工具指南](docs/HELPER_USAGE.md)** - 工具类使用说明
+- **[实现概要](docs/IMPLEMENTATION_SUMMARY.md)** - 技术实现详情
 
 ---
 

@@ -38,6 +38,8 @@ All core functionality is located under `online.bingzi.bilibili.video.pro.intern
 - **`network/`** - Bilibili API integration with OkHttp3
 - **`helper/`** - Utility classes (QR code generation, Minecraft integration)
 - **`manager/`** - Plugin lifecycle management
+- **`cache/`** - Cache management and cleanup (CacheCleanupManager)
+- **`security/`** - Security filters and data protection (LogSecurityFilter)
 
 ### Key Components
 
@@ -57,6 +59,19 @@ All core functionality is located under `online.bingzi.bilibili.video.pro.intern
 - **PluginManager**: Handles TabooLib lifecycle events (`@Awake` annotations)
 - **MapItemHelper**: Renders QR codes to Minecraft map items
 - **NMSHelper**: ProtocolLib integration for packet handling
+
+#### Cache Management Layer
+- **CacheCleanupManager**: Automated cache cleanup and memory management
+- **Player Cooldowns**: Manages command cooldowns with automatic expiration
+- **Video Cooldowns**: Tracks per-video interaction limits with cleanup
+- **Login Sessions**: Manages QR code login sessions with 10-minute expiration
+- **Statistics**: Provides cache usage monitoring and memory estimation
+
+#### Security Layer
+- **LogSecurityFilter**: Filters sensitive information from logs and stack traces
+- **Environment Filtering**: Different security levels for production vs development
+- **Pattern Matching**: Regex-based detection of cookies, passwords, tokens, IPs, UUIDs
+- **Safe Error Messages**: Converts technical errors to user-friendly messages
 
 ### Technology Stack
 
@@ -106,6 +121,21 @@ Commands use TabooLib's modern command framework:
 - Health checks: Executed on `LifeCycle.ACTIVE`
 - Cleanup: `PluginManager.cleanup()` called on `LifeCycle.DISABLE`
 
+### Cache Management
+- Use `CacheCleanupManager` for all caching operations
+- Automatic cleanup runs every 5 minutes
+- Player cooldowns expire after 10 minutes
+- Video cooldowns expire after 1 hour
+- Login sessions expire after 10 minutes
+- Cache statistics available via `getCacheStatistics()`
+
+### Security Guidelines
+- All sensitive log output must use `LogSecurityFilter.filterSensitiveInfo()`
+- Use `LogSecurityFilter.filterForEnvironment()` for environment-specific filtering
+- Convert errors with `LogSecurityFilter.getSafeErrorMessage()` before user display
+- Stack traces filtered with `LogSecurityFilter.filterStackTrace()`
+- Production environment enforces strict filtering policies
+
 ## Common Development Patterns
 
 ### Async Operations
@@ -129,6 +159,34 @@ val networkManager = BilibiliNetworkManager.getInstance()
 networkManager.initialize()
 ```
 
+### Cache Usage
+```kotlin
+// Set player cooldown
+CacheCleanupManager.setPlayerCooldown(playerUuid, 30)
+
+// Check cooldown status
+if (CacheCleanupManager.isPlayerOnCooldown(playerUuid)) {
+    val remaining = CacheCleanupManager.getPlayerCooldownRemaining(playerUuid)
+    // Handle cooldown
+}
+
+// Manage login sessions
+CacheCleanupManager.setLoginSession(playerUuid, qrcodeKey)
+val session = CacheCleanupManager.getLoginSession(playerUuid)
+```
+
+### Security Filtering
+```kotlin
+// Filter sensitive information from logs
+val safeMessage = LogSecurityFilter.filterSensitiveInfo(originalMessage)
+
+// Environment-specific filtering
+val filteredMessage = LogSecurityFilter.filterForEnvironment(message, isProduction)
+
+// Safe error messages for users
+val userMessage = LogSecurityFilter.getSafeErrorMessage(exception.message)
+```
+
 ## Important Notes
 
 - **Thread Safety**: Database and network operations are designed to be thread-safe
@@ -136,6 +194,9 @@ networkManager.initialize()
 - **Error Handling**: Network and database operations include comprehensive error handling
 - **Cookie Security**: Cookie data is sensitive and automatically managed
 - **API Limitations**: Bilibili API has rate limiting - implement appropriate delays
+- **Cache Management**: Automatic cleanup prevents memory leaks, all cache operations are thread-safe
+- **Security Filtering**: All sensitive data is filtered before logging to prevent information leakage
+- **Environment Awareness**: Different security policies for production vs development environments
 
 ## Documentation References
 
