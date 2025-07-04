@@ -1,0 +1,138 @@
+# GUI声音和动画配置
+
+# 声音配置
+sounds:
+  enabled: true
+  volume: 1.0
+  pitch: 1.0
+  
+  # 声音映射
+  effects:
+    click: "UI_BUTTON_CLICK"
+    success: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    error: "ENTITY_VILLAGER_NO"
+    warning: "BLOCK_NOTE_BLOCK_PLING"
+    page_turn: "ITEM_BOOK_PAGE_TURN"
+    open_gui: "BLOCK_CHEST_OPEN"
+    close_gui: "BLOCK_CHEST_CLOSE"
+    
+  # 特殊动作声音
+  actions:
+    login_success: "ENTITY_PLAYER_LEVELUP"
+    login_failed: "ENTITY_ENDERMAN_TELEPORT"
+    triple_complete: "ENTITY_FIREWORK_ROCKET_BLAST"
+    reload_config: "BLOCK_ANVIL_USE"
+    admin_action: "BLOCK_BEACON_ACTIVATE"
+
+# 动画配置
+animations:
+  enabled: true
+  update_interval: 20  # ticks (1秒)
+  
+  # 支持的动画效果
+  effects:
+    - "glow"      # 发光效果
+    - "enchant"   # 附魔效果
+    - "particle"  # 粒子效果
+    - "rainbow"   # 彩虹文字效果
+    
+  # 发光动画配置
+  glow:
+    enabled: true
+    interval: 40  # ticks (2秒)
+    materials:
+      - "GLOWSTONE"
+      - "SEA_LANTERN"
+      - "JACK_O_LANTERN"
+      
+  # 粒子效果配置
+  particle:
+    enabled: true
+    type: "VILLAGER_HAPPY"
+    count: 5
+    offset: 0.5
+    
+  # 彩虹文字效果
+  rainbow:
+    enabled: true
+    speed: 10  # ticks
+    colors: ["&c", "&6", "&e", "&a", "&b", "&9", "&d"]
+    
+  # 呼吸灯效果
+  breathing:
+    enabled: true
+    min_alpha: 0.3
+    max_alpha: 1.0
+    speed: 30  # ticks
+
+# 特效触发配置
+triggers:
+  # 鼠标悬停效果
+  hover:
+    enabled: true
+    sound: "BLOCK_NOTE_BLOCK_HARP"
+    particle: "SPELL_WITCH"
+    
+  # 点击效果
+  click:
+    enabled: true
+    sound: "UI_BUTTON_CLICK"
+    particle: "CRIT"
+    
+  # 成功效果
+  success:
+    enabled: true
+    sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    particle: "VILLAGER_HAPPY"
+    
+  # 错误效果
+  error:
+    enabled: true
+    sound: "ENTITY_VILLAGER_NO"
+    particle: "SMOKE_NORMAL"
+
+# 自定义音效包
+custom_sound_packs:
+  # 科技风音效包
+  tech:
+    name: "科技风格"
+    sounds:
+      click: "BLOCK_STONE_BUTTON_CLICK_ON"
+      success: "BLOCK_BEACON_POWER_SELECT"
+      error: "BLOCK_REDSTONE_TORCH_BURNOUT"
+      warning: "BLOCK_NOTE_BLOCK_BIT"
+      
+  # 自然风音效包
+  nature:
+    name: "自然风格"
+    sounds:
+      click: "BLOCK_WOOD_BUTTON_CLICK_ON"
+      success: "ENTITY_EXPERIENCE_ORB_PICKUP"
+      error: "ENTITY_VILLAGER_NO"
+      warning: "ENTITY_CHICKEN_EGG"
+      
+  # 魔法风音效包
+  magic:
+    name: "魔法风格"
+    sounds:
+      click: "ENTITY_EXPERIENCE_ORB_PICKUP"
+      success: "ENTITY_PLAYER_LEVELUP"
+      error: "ENTITY_ENDERMAN_TELEPORT"
+      warning: "BLOCK_ENCHANTMENT_TABLE_USE"
+
+# 性能优化配置
+performance:
+  # 最大同时播放音效数
+  max_concurrent_sounds: 10
+  
+  # 音效缓存大小
+  sound_cache_size: 50
+  
+  # 粒子效果限制
+  max_particles_per_player: 20
+  
+  # 动画帧率限制
+  max_animation_fps: 20
+  
+  # 自动清理间隔
+  cleanup_interval: 6000  # ticks (5分钟)

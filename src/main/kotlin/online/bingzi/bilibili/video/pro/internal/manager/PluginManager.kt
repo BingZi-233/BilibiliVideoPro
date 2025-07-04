@@ -2,6 +2,7 @@ package online.bingzi.bilibili.video.pro.internal.manager
 
 import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
+import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
@@ -34,6 +35,9 @@ object PluginManager {
                 // 初始化网络管理器
                 BilibiliNetworkManager.getInstance().initialize()
                 console().sendLang("pluginNetworkInitialized")
+                
+                // 初始化GUI管理器
+                GuiManager.initialize()
                 
                 isInitialized = true
                 console().sendLang("pluginInitializationSuccess")

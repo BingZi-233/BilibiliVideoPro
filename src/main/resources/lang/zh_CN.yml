@@ -35,11 +35,49 @@ commandHelpLogin: "&a/bvp login &7- &f登录哔哩哔哩账户"
 commandHelpCheck: "&a/bvp check <BV号> &7- &f检查视频一键三联状态"
 commandHelpStatus: "&a/bvp status &7- &f查看账户绑定状态"
 commandHelpInfo: "&a/bvp info &7- &f查看插件信息"
+commandHelpGui: "&a/bvp gui &7- &f打开图形界面"
 commandHelpUnbind: "&a/bvp unbind <玩家> &7- &f解绑玩家账户 &c(管理员)"
 commandHelpReload: "&a/bvp reload &7- &f重载插件配置 &c(管理员)"
 
-# Permission messages
-noPermission: "&c您没有权限使用此命令！"
+# GUI related messages
+guiMainMenuTitle: "&6&lBilibiliVideoPro &f- 主菜单"
+guiVideoListTitle: "&6&lBilibiliVideoPro &f- 视频列表"
+guiPlayerStatsTitle: "&6&lBilibiliVideoPro &f- 个人统计"
+guiAdminTitle: "&c&lBilibiliVideoPro &f- 管理员面板"
+
+# GUI button descriptions
+guiLoginButton: "&a&l开始登录"
+guiLoginButtonDesc: "&7绑定您的Bilibili账户"
+guiAlreadyBoundButton: "&a&l已登录"
+guiAlreadyBoundDesc: "&7查看账户信息"
+guiVideoListButton: "&b&l视频列表"
+guiVideoListDesc: "&7查看可获得奖励的视频"
+guiStatsButton: "&d&l个人统计"
+guiStatsDesc: "&7查看您的互动统计"
+guiAdminButton: "&c&l管理员面板"
+guiAdminDesc: "&7管理员专用功能"
+guiHelpButton: "&a&l帮助"
+guiHelpDesc: "&7查看插件帮助信息"
+guiCloseButton: "&c&l关闭"
+guiCloseDesc: "&7关闭此界面"
+guiBackButton: "&c&l返回"
+guiBackDesc: "&7返回上一页"
+
+# Quick check messages
+quickCheckStarted: "&7正在快速检查视频 &f{0} &7的一键三联状态..."
+
+# System status messages
+systemStatusNormal: "&a正常"
+systemStatusError: "&c异常"
+databaseConnectionNormal: "&a正常"
+databaseConnectionError: "&c连接失败"
+
+# Achievement messages
+achievementTripleMaster: "&6★★★ 三联大师"
+achievementTripleExpert: "&e★★☆ 三联专家"
+achievementTripleFan: "&a★☆☆ 三联达人"
+achievementTripleNewbie: "&7☆☆☆ 三联新手"
+achievementTripleStart: "&7☆☆☆ 开始三联之旅"
 
 # Login messages
 loginAlreadyBound: "&c您已绑定哔哩哔哩账户: &e{0}"

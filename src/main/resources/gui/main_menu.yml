@@ -1,0 +1,106 @@
+# 主菜单GUI配置
+title: "&6&lBilibiliVideoPro &f- 主菜单"
+size: 5  # 界面行数 (1-6)
+
+# 布局结构 - 使用字符定义每个位置的物品
+layout:
+  - "# # # # # # # # #"
+  - "# a # b # c # d #"
+  - "# # # # # # # # #"
+  - "# e # f # g # h #"
+  - "# # # # # # # # #"
+
+# 物品配置
+items:
+  '#':  # 边框装饰
+    type: "border"
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: "&f "
+    
+  'a':  # 登录按钮
+    type: "login"
+    material: "EMERALD"
+    name: "&a&l账户登录"
+    lore:
+      - "&7点击登录或查看账户信息"
+      - ""
+      - "&e左键点击"
+    action: "login"
+    
+  'b':  # 视频列表
+    type: "video_list"
+    material: "BOOK"
+    name: "&b&l视频列表"
+    lore:
+      - "&7查看可获得奖励的视频"
+      - "&7检查一键三联状态"
+      - ""
+      - "&e左键点击"
+    action: "open_video_list"
+    
+  'c':  # 个人统计
+    type: "player_stats"
+    material: "PAPER"
+    name: "&d&l个人统计"
+    lore:
+      - "&7查看您的互动统计"
+      - "&7一键三联完成次数"
+      - ""
+      - "&e左键点击"
+    action: "open_player_stats"
+    
+  'd':  # 管理员面板
+    type: "admin"
+    material: "COMMAND_BLOCK"
+    name: "&c&l管理员面板"
+    lore:
+      - "&7管理员专用功能"
+      - "&7需要管理员权限"
+      - ""
+      - "&e左键点击"
+    permission: "bilibilipro.admin"
+    action: "open_admin"
+    
+  'e':  # 系统状态
+    type: "system_status"
+    material: "COMPASS"
+    name: "&6&l系统状态"
+    lore:
+      - "&7查看插件运行状态"
+      - "&7网络连接状态"
+      - ""
+      - "&e左键点击"
+    action: "show_status"
+    
+  'f':  # 帮助信息
+    type: "help"
+    material: "KNOWLEDGE_BOOK"
+    name: "&a&l帮助"
+    lore:
+      - "&7查看插件帮助信息"
+      - "&7命令使用说明"
+      - ""
+      - "&e左键点击"
+    action: "show_help"
+    
+  'g':  # 重载配置
+    type: "reload"
+    material: "REPEATER"
+    name: "&e&l重载配置"
+    lore:
+      - "&7重载插件配置文件"
+      - "&c需要管理员权限"
+      - ""
+      - "&e左键点击"
+    permission: "bilibilipro.admin"
+    action: "reload_config"
+    
+  'h':  # 关闭界面
+    type: "close"
+    material: "BARRIER"
+    name: "&c&l关闭"
+    lore:
+      - "&7关闭此界面"
+      - ""
+      - "&e左键点击"
+    action: "close"

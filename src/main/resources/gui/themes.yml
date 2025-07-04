@@ -1,0 +1,185 @@
+# GUI主题配置文件
+
+# 默认主题
+default:
+  name: "默认主题"
+  description: "简洁明亮的默认样式"
+  
+  # 颜色配置
+  colors:
+    border_material: "GRAY_STAINED_GLASS_PANE"
+    accent_color: "&6"          # 强调色 - 金色
+    text_color: "&f"            # 文本色 - 白色
+    success_color: "&a"         # 成功色 - 绿色
+    warning_color: "&e"         # 警告色 - 黄色
+    error_color: "&c"           # 错误色 - 红色
+    info_color: "&b"            # 信息色 - 青色
+    
+  # 特殊效果
+  effects:
+    glow_enabled: true
+    enchant_enabled: false
+    particle_enabled: true
+
+# 暗黑主题
+dark:
+  name: "暗黑主题"
+  description: "低调优雅的暗色系风格"
+  
+  colors:
+    border_material: "BLACK_STAINED_GLASS_PANE"
+    accent_color: "&8"          # 强调色 - 深灰
+    text_color: "&7"            # 文本色 - 灰色
+    success_color: "&2"         # 成功色 - 深绿
+    warning_color: "&6"         # 警告色 - 橙色
+    error_color: "&4"           # 错误色 - 深红
+    info_color: "&3"            # 信息色 - 深青
+    
+  effects:
+    glow_enabled: false
+    enchant_enabled: true
+    particle_enabled: false
+
+# 蓝色主题
+blue:
+  name: "海洋主题"
+  description: "清新的蓝色海洋风格"
+  
+  colors:
+    border_material: "BLUE_STAINED_GLASS_PANE"
+    accent_color: "&9"          # 强调色 - 蓝色
+    text_color: "&f"            # 文本色 - 白色
+    success_color: "&b"         # 成功色 - 青色
+    warning_color: "&e"         # 警告色 - 黄色
+    error_color: "&c"           # 错误色 - 红色
+    info_color: "&3"            # 信息色 - 深青
+    
+  effects:
+    glow_enabled: true
+    enchant_enabled: false
+    particle_enabled: true
+
+# 绿色主题
+green:
+  name: "自然主题"
+  description: "清新的绿色自然风格"
+  
+  colors:
+    border_material: "GREEN_STAINED_GLASS_PANE"
+    accent_color: "&2"          # 强调色 - 深绿
+    text_color: "&f"            # 文本色 - 白色
+    success_color: "&a"         # 成功色 - 绿色
+    warning_color: "&e"         # 警告色 - 黄色
+    error_color: "&c"           # 错误色 - 红色
+    info_color: "&b"            # 信息色 - 青色
+    
+  effects:
+    glow_enabled: true
+    enchant_enabled: false
+    particle_enabled: true
+
+# 紫色主题
+purple:
+  name: "神秘主题"
+  description: "神秘优雅的紫色风格"
+  
+  colors:
+    border_material: "PURPLE_STAINED_GLASS_PANE"
+    accent_color: "&5"          # 强调色 - 紫色
+    text_color: "&f"            # 文本色 - 白色
+    success_color: "&d"         # 成功色 - 粉色
+    warning_color: "&e"         # 警告色 - 黄色
+    error_color: "&c"           # 错误色 - 红色
+    info_color: "&b"            # 信息色 - 青色
+    
+  effects:
+    glow_enabled: true
+    enchant_enabled: true
+    particle_enabled: true
+
+# 彩虹主题
+rainbow:
+  name: "彩虹主题"
+  description: "绚丽多彩的彩虹风格"
+  
+  colors:
+    border_material: "WHITE_STAINED_GLASS_PANE"
+    accent_color: "&6"          # 强调色 - 金色
+    text_color: "&f"            # 文本色 - 白色
+    success_color: "&a"         # 成功色 - 绿色
+    warning_color: "&e"         # 警告色 - 黄色
+    error_color: "&c"           # 错误色 - 红色
+    info_color: "&b"            # 信息色 - 青色
+    
+  # 彩虹特效配置
+  rainbow_effect:
+    enabled: true
+    colors: ["&c", "&6", "&e", "&a", "&b", "&9", "&d"]
+    speed: 20  # ticks
+    
+  effects:
+    glow_enabled: true
+    enchant_enabled: true
+    particle_enabled: true
+
+# 节日主题配置
+holiday:
+  # 春节主题
+  chinese_new_year:
+    name: "春节主题"
+    description: "喜庆的红色春节风格"
+    colors:
+      border_material: "RED_STAINED_GLASS_PANE"
+      accent_color: "&c"
+      text_color: "&6"
+      success_color: "&e"
+      warning_color: "&6"
+      error_color: "&4"
+      info_color: "&f"
+    effects:
+      glow_enabled: true
+      enchant_enabled: true
+      particle_enabled: true
+      
+  # 圣诞主题
+  christmas:
+    name: "圣诞主题"
+    description: "温馨的红绿圣诞风格"
+    colors:
+      border_material: "RED_STAINED_GLASS_PANE"
+      accent_color: "&a"
+      text_color: "&f"
+      success_color: "&2"
+      warning_color: "&6"
+      error_color: "&c"
+      info_color: "&b"
+    effects:
+      glow_enabled: true
+      enchant_enabled: false
+      particle_enabled: true
+
+# 自定义主题示例
+custom:
+  name: "自定义主题"
+  description: "您可以自由定制的主题"
+  
+  colors:
+    border_material: "LIGHT_GRAY_STAINED_GLASS_PANE"
+    accent_color: "&f"
+    text_color: "&7"
+    success_color: "&a"
+    warning_color: "&e"
+    error_color: "&c"
+    info_color: "&b"
+    
+  effects:
+    glow_enabled: false
+    enchant_enabled: false
+    particle_enabled: false
+    
+  # 自定义材质映射
+  custom_materials:
+    login_button: "EMERALD_BLOCK"
+    video_button: "BOOKSHELF"
+    stats_button: "DIAMOND_BLOCK"
+    admin_button: "COMMAND_BLOCK"

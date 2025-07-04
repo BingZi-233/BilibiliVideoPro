@@ -1,0 +1,172 @@
+# 个人统计GUI配置
+title: "&6&lBilibiliVideoPro &f- 个人统计"
+size: 5
+
+# 布局结构
+layout:
+  - "# # # # # # # # #"
+  - "# a # b # c # d #"
+  - "# # # # # # # # #"
+  - "# e # f # g # h #"
+  - "# # # # # # # # #"
+
+# 物品配置
+items:
+  '#':
+    type: "border"
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: "&f "
+    
+  'a':
+    type: "account_info"
+    material: "PLAYER_HEAD"
+    name: "&a&l账户信息"
+    lore:
+      - "&7用户名: &f{username}"
+      - "&7UID: &f{uid}"
+      - "&7等级: &f{level}"
+      - "&7大会员: {vip_status}"
+      - "&7绑定时间: &f{bind_time}"
+      - "&7最后登录: &f{last_login}"
+    
+  'b':
+    type: "total_stats"
+    material: "BOOK"
+    name: "&b&l总体统计"
+    lore:
+      - "&7互动视频总数: &f{total_videos}"
+      - "&7总点赞数: &f{total_likes}"
+      - "&7总投币数: &f{total_coins}"
+      - "&7总收藏数: &f{total_favorites}"
+      - "&7总奖励次数: &f{total_rewards}"
+    
+  'c':
+    type: "triple_stats"
+    material: "DIAMOND"
+    name: "&d&l一键三联统计"
+    lore:
+      - "&7完成三联视频数: &f{triple_completed}"
+      - "&7三联完成率: &f{completion_rate}%"
+      - "&7平均每日三联: &f{daily_average}"
+      - ""
+      - "&a&l成就进度:"
+      - "{achievement_progress}"
+    
+  'd':
+    type: "recent_activity"
+    material: "CLOCK"
+    name: "&e&l最近活动"
+    lore:
+      - "&7查看最近的互动记录"
+      - "&7最近7天的活动统计"
+      - ""
+      - "&e点击查看详细记录"
+    action: "show_recent_activity"
+    
+  'e':
+    type: "cookie_status"
+    material: "EMERALD"
+    name: "&6&lCookie状态"
+    lore:
+      - "&7状态: {cookie_status}"
+      - "&7更新时间: &f{update_time}"
+      - ""
+      - "{cookie_message}"
+    
+  'f':
+    type: "ranking"
+    material: "GOLD_INGOT"
+    name: "&6&l服务器排行"
+    lore:
+      - "&7您的三联排名: &f#{rank}"
+      - "&7服务器总玩家: &f{total_players}"
+      - ""
+      - "&e点击查看完整排行榜"
+    action: "show_ranking"
+    
+  'g':
+    type: "refresh"
+    material: "REPEATER"
+    name: "&a&l刷新数据"
+    lore:
+      - "&7刷新统计信息"
+      - ""
+      - "&e左键点击"
+    action: "refresh"
+    
+  'h':
+    type: "back"
+    material: "ARROW"
+    name: "&c&l返回"
+    lore:
+      - "&7返回主菜单"
+      - ""
+      - "&e左键点击"
+    action: "back_to_main"
+
+# 未绑定账户时的配置
+not_bound:
+  layout:
+    - "# # # # # # # # #"
+    - "# # # # a # # # #"
+    - "# # # # # # # # #"
+    - "# # b # # # c # #"
+    - "# # # # # # # # #"
+    
+  items:
+    'a':
+      type: "not_bound_info"
+      material: "BARRIER"
+      name: "&c&l未绑定Bilibili账户"
+      lore:
+        - "&7您还没有绑定Bilibili账户"
+        - "&7无法查看统计信息"
+        - ""
+        - "&e请先登录您的Bilibili账户"
+        
+    'b':
+      type: "login_button"
+      material: "EMERALD"
+      name: "&a&l开始登录"
+      lore:
+        - "&7绑定您的Bilibili账户"
+        - ""
+        - "&e左键点击"
+      action: "login"
+      
+    'c':
+      type: "back"
+      material: "ARROW"
+      name: "&c&l返回"
+      lore:
+        - "&7返回主菜单"
+        - ""
+        - "&e左键点击"
+      action: "back_to_main"
+
+# 成就配置
+achievements:
+  triple_master:
+    threshold: 100
+    name: "&6★★★ 三联大师"
+    format: "&6★★★ 三联大师 ({count}/100+)"
+    
+  triple_expert:
+    threshold: 50
+    name: "&e★★☆ 三联专家"
+    format: "&e★★☆ 三联专家 ({count}/50)"
+    
+  triple_fan:
+    threshold: 20
+    name: "&a★☆☆ 三联达人"
+    format: "&a★☆☆ 三联达人 ({count}/20)"
+    
+  triple_newbie:
+    threshold: 5
+    name: "&7☆☆☆ 三联新手"
+    format: "&7☆☆☆ 三联新手 ({count}/5)"
+    
+  triple_start:
+    threshold: 0
+    name: "&7☆☆☆ 开始三联之旅"
+    format: "&7☆☆☆ 开始三联之旅 ({count}/5)"

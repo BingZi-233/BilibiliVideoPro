@@ -52,10 +52,21 @@ object VideoInteractionService {
         val tripleCompletedVideos = records.count { it.isLiked && it.isCoined && it.isFavorited }.toLong()
         return PlayerStatistics(
             totalVideos = totalVideos,
-            likedVideos = likedVideos,
-            coinedVideos = coinedVideos,
-            favoritedVideos = favoritedVideos,
+            totalLikes = likedVideos,
+            totalCoins = coinedVideos,
+            totalFavorites = favoritedVideos,
             tripleCompletedVideos = tripleCompletedVideos
         )
+    }
+
+    /**
+     * 获取总互动数
+     */
+    fun getTotalInteractionCount(): Int {
+        return try {
+            videoInteractionRecordDao.countOf().toInt()
+        } catch (e: Exception) {
+            0
+        }
     }
 }

@@ -1,0 +1,105 @@
+# GUI全局配置文件
+
+# 当前使用的配置
+current:
+  theme: "default"              # 当前主题
+  sound_pack: "default"         # 当前音效包
+  language: "zh_CN"             # 界面语言
+  
+# GUI文件路径配置
+files:
+  main_menu: "gui/main_menu.yml"
+  video_list: "gui/video_list.yml"  
+  player_stats: "gui/player_stats.yml"
+  admin_panel: "gui/admin_panel.yml"
+  themes: "gui/themes.yml"
+  effects: "gui/effects.yml"
+  
+# 全局GUI设置
+global:
+  # 默认GUI大小 (1-6行)
+  default_size: 5
+  
+  # 是否允许玩家自定义主题
+  allow_player_themes: true
+  
+  # 是否启用GUI权限检查
+  permission_check: true
+  
+  # GUI打开/关闭动画
+  animations:
+    open_animation: true
+    close_animation: true
+    transition_speed: 10  # ticks
+    
+  # 自动刷新间隔
+  auto_refresh:
+    enabled: true
+    interval: 60  # 秒
+    
+  # GUI缓存配置
+  cache:
+    enabled: true
+    max_size: 100
+    expire_time: 300  # 秒
+
+# 调试配置
+debug:
+  enabled: false
+  log_gui_actions: false
+  log_theme_changes: false
+  log_performance: false
+  
+# 备用配置
+fallback:
+  # 当GUI配置加载失败时的备用方案
+  use_builtin_gui: true
+  
+  # 备用主题
+  fallback_theme: "default"
+  
+  # 备用音效
+  fallback_sounds: true
+
+# GUI更新检查
+updates:
+  # 是否检查GUI配置更新
+  check_for_updates: true
+  
+  # 检查间隔 (分钟)
+  check_interval: 60
+  
+  # 自动应用更新
+  auto_apply: false
+
+# 多语言支持
+localization:
+  # 支持的语言
+  supported_languages:
+    - "zh_CN"  # 简体中文
+    - "zh_TW"  # 繁体中文  
+    - "en_US"  # 英语
+    - "ja_JP"  # 日语
+    
+  # 语言文件路径
+  language_files:
+    zh_CN: "gui/lang/zh_CN.yml"
+    zh_TW: "gui/lang/zh_TW.yml" 
+    en_US: "gui/lang/en_US.yml"
+    ja_JP: "gui/lang/ja_JP.yml"
+
+# 兼容性配置
+compatibility:
+  # 最低InvUI版本
+  min_invui_version: "1.38"
+  
+  # Minecraft版本兼容
+  minecraft_versions:
+    - "1.16"
+    - "1.17"
+    - "1.18"
+    - "1.19"
+    - "1.20"
+    
+  # 是否启用兼容模式
+  legacy_support: true

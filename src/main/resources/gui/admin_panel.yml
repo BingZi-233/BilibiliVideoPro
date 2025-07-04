@@ -1,0 +1,209 @@
+# 管理员面板GUI配置
+title: "&c&lBilibiliVideoPro &f- 管理员面板"
+size: 5
+
+# 布局结构
+layout:
+  - "# # # # # # # # #"
+  - "# a # b # c # d #"
+  - "# # # # # # # # #"
+  - "# e # f # g # h #"
+  - "# # # # # # # # #"
+
+# 物品配置
+items:
+  '#':
+    type: "border"
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: "&f "
+    
+  'a':
+    type: "player_management"
+    material: "PLAYER_HEAD"
+    name: "&a&l玩家管理"
+    lore:
+      - "&7管理已绑定的玩家账户"
+      - "&7查看玩家信息和解绑"
+      - ""
+      - "&e左键点击"
+    action: "open_player_management"
+    
+  'b':
+    type: "system_stats"
+    material: "BOOK"
+    name: "&b&l系统统计"
+    lore:
+      - "&7查看服务器整体统计"
+      - "&7玩家活跃度分析"
+      - ""
+      - "&e左键点击"
+    action: "open_system_stats"
+    
+  'c':
+    type: "config_management"
+    material: "WRITABLE_BOOK"
+    name: "&d&l配置管理"
+    lore:
+      - "&7管理插件配置"
+      - "&7重载配置文件"
+      - ""
+      - "&e左键点击"
+    action: "reload_config"
+    
+  'd':
+    type: "database_management"
+    material: "CHEST"
+    name: "&6&l数据库管理"
+    lore:
+      - "&7数据库状态检查"
+      - "&7数据备份与恢复"
+      - ""
+      - "&e左键点击"
+    action: "open_database_management"
+    
+  'e':
+    type: "log_viewer"
+    material: "PAPER"
+    name: "&e&l日志查看"
+    lore:
+      - "&7查看插件运行日志"
+      - "&7错误日志分析"
+      - ""
+      - "&e左键点击"
+    action: "open_log_viewer"
+    
+  'f':
+    type: "backup"
+    material: "ENDER_CHEST"
+    name: "&c&l数据备份"
+    lore:
+      - "&7创建数据备份"
+      - "&7恢复历史数据"
+      - ""
+      - "&e左键点击"
+    action: "open_backup_management"
+    
+  'g':
+    type: "reload"
+    material: "REPEATER"
+    name: "&a&l重载插件"
+    lore:
+      - "&7重载插件配置"
+      - "&7刷新系统状态"
+      - ""
+      - "&e左键点击"
+    action: "reload_config"
+    
+  'h':
+    type: "back"
+    material: "BARRIER"
+    name: "&c&l返回主菜单"
+    lore:
+      - "&7返回主菜单"
+      - ""
+      - "&e左键点击"
+    action: "back_to_main"
+
+# 玩家管理界面配置
+player_management:
+  title: "&c&l管理员面板 &f- 玩家管理"
+  size: 5
+  
+  layout:
+    - "# # # # # # # # #"
+    - "# x x x x x x x #"
+    - "# x x x x x x x #"
+    - "# x x x x x x x #"
+    - "# < # # b # # > #"
+    
+  items:
+    'x':
+      type: "player_entry"
+      # 动态生成玩家条目
+      
+    '<':
+      type: "previous_page"
+      material: "ARROW"
+      name: "&7上一页"
+      
+    '>':
+      type: "next_page"
+      material: "ARROW"
+      name: "&7下一页"
+      
+    'b':
+      type: "back"
+      material: "ARROW"
+      name: "&c&l返回"
+      action: "back_to_admin"
+
+# 玩家条目配置
+player_entry:
+  material: "PLAYER_HEAD"
+  name: "&6&l{player_name}"
+  lore:
+    - "&7UUID: &f{uuid}"
+    - "&7Bilibili用户: &f{bilibili_username}"
+    - "&7UID: &f{bilibili_uid}"
+    - "&7绑定时间: &f{bind_time}"
+    - "&7最后登录: &f{last_login}"
+    - "&7状态: {status}"
+    - ""
+    - "&e左键: 查看详情"
+    - "&c右键: 解绑账户"
+    - "&e Shift+左键: 强制刷新"
+
+# 系统统计界面配置
+system_stats:
+  title: "&c&l管理员面板 &f- 系统统计"
+  size: 5
+  
+  layout:
+    - "# # # # # # # # #"
+    - "# a # b # c # d #"
+    - "# # # # # # # # #"
+    - "# # # # e # # # #"
+    - "# # # # # # # # #"
+    
+  items:
+    'a':
+      type: "total_players"
+      material: "PLAYER_HEAD"
+      name: "&a&l总绑定玩家"
+      lore:
+        - "&7已绑定玩家数: &f{total_players}"
+        - "&7活跃玩家数: &f{active_players}"
+        - "&7今日新增: &f{daily_new}"
+        
+    'b':
+      type: "total_interactions"
+      material: "DIAMOND"
+      name: "&b&l总互动数"
+      lore:
+        - "&7总互动次数: &f{total_interactions}"
+        - "&7今日互动: &f{daily_interactions}"
+        - "&7平均互动: &f{average_interactions}"
+        
+    'c':
+      type: "system_status"
+      material: "EMERALD"
+      name: "&6&l系统状态"
+      lore:
+        - "&7插件状态: {plugin_status}"
+        - "&7网络连接: {network_status}"
+        - "&7内存使用: &f{memory_usage}MB"
+        
+    'd':
+      type: "database_status"
+      material: "EMERALD"
+      name: "&d&l数据库状态"
+      lore:
+        - "&7数据库类型: &f{db_type}"
+        - "&7连接状态: {db_status}"
+        - "&7表数量: &f{table_count}"
+        
+    'e':
+      type: "back"
+      material: "ARROW"
+      name: "&c&l返回"
+      action: "back_to_admin"

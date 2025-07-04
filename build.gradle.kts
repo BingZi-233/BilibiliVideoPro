@@ -33,6 +33,7 @@ taboolib {
     relocate("com.zaxxer.hikari", "online.bingzi.bilibili.video.pro.libs.hikari")
     relocate("com.google.zxing", "online.bingzi.bilibili.video.pro.libs.zxing")
     relocate("com.mysql", "online.bingzi.bilibili.video.pro.libs.mysql")
+    relocate("xyz.xenondevs.invui", "online.bingzi.bilibili.video.pro.libs.invui")
 
     description {
         name = "BilibiliVideoPro"
@@ -53,6 +54,7 @@ taboolib {
 repositories {
     mavenCentral()
     maven("https://repo.dmulloy2.net/repository/public/") // ProtocolLib repository
+    maven("https://repo.xenondevs.xyz/releases")
 }
 
 dependencies {
@@ -86,6 +88,9 @@ dependencies {
 
     // ProtocolLib for packet handling
     implementation("com.comphenix.protocol:ProtocolLib:5.3.0")
+    
+    // InvUI - GUI库
+    taboo("xyz.xenondevs.invui:invui:1.38")
 }
 
 tasks.withType<JavaCompile> {

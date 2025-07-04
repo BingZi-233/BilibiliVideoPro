@@ -49,6 +49,7 @@ object BilibiliVideoProCommand {
             sender.sendLang("commandHelpCheck")
             sender.sendLang("commandHelpStatus")
             sender.sendLang("commandHelpInfo")
+            sender.sendLang("commandHelpGui")
             if (sender.hasPermission("bilibilipro.admin")) {
                 sender.sendLang("commandHelpUnbind")
                 sender.sendLang("commandHelpReload")
@@ -130,6 +131,44 @@ object BilibiliVideoProCommand {
     }
     
     /**
+     * GUI命令 - 打开主菜单GUI
+     */
+    @CommandBody
+    val gui = subCommand {
+        execute<Player> { player, _, _ ->
+            submit(async = false) {
+                online.bingzi.bilibili.video.pro.internal.gui.GuiManager.showMainMenu(player)
+            }
+        }
+    }
+    
+    /**
+     * GUI主题命令
+     */
+    @CommandBody
+    val theme = subCommand {
+        dynamic("theme_name") {
+            execute<CommandSender> { sender, _, argument ->
+                if (!sender.hasPermission("bilibilipro.admin")) {
+                    sender.sendLang("noPermission")
+                    return@execute
+                }
+                
+                val themeName = argument
+                submit(async = true) {
+                    switchGuiTheme(sender, themeName)
+                }
+            }
+        }
+        
+        execute<CommandSender> { sender, _, _ ->
+            submit(async = false) {
+                sender.sendMessage(online.bingzi.bilibili.video.pro.internal.gui.GuiManager.getCurrentThemeInfo())
+            }
+        }
+    }
+    
+    /**
      * 重载配置命令
      */
     @CommandBody
@@ -143,6 +182,7 @@ object BilibiliVideoProCommand {
             submit(async = true) {
                 try {
                     config.reload()
+                    online.bingzi.bilibili.video.pro.internal.gui.GuiManager.reloadGuiConfig()
                     submit(async = false) {
                         sender.sendLang("reloadSuccess")
                     }
@@ -152,6 +192,16 @@ object BilibiliVideoProCommand {
                     }
                 }
             }
+        }
+    }
+    
+    /**
+     * 切换GUI主题
+     */
+    private fun switchGuiTheme(sender: CommandSender, themeName: String) {
+        // 实现主题切换逻辑
+        submit(async = false) {
+            sender.sendMessage("§7主题切换功能开发中...")
         }
     }
     

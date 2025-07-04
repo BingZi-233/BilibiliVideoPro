@@ -51,4 +51,30 @@ object PlayerBilibiliService {
         val playerBilibili = findByPlayerUuid(uuid) ?: return
         playerBilibiliDao.delete(playerBilibili)
     }
+
+    /**
+     * 查找所有绑定的玩家
+     */
+    fun findAll(): List<PlayerBilibili> {
+        return try {
+            val queryBuilder = playerBilibiliDao.queryBuilder()
+            queryBuilder.where().eq(PlayerBilibili.IS_ACTIVE, true)
+            queryBuilder.query()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * 获取总玩家数
+     */
+    fun getTotalPlayerCount(): Int {
+        return try {
+            val queryBuilder = playerBilibiliDao.queryBuilder()
+            queryBuilder.where().eq(PlayerBilibili.IS_ACTIVE, true)
+            queryBuilder.countOf().toInt()
+        } catch (e: Exception) {
+            0
+        }
+    }
 }

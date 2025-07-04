@@ -1,0 +1,72 @@
+# 视频列表GUI配置
+title: "&6&lBilibiliVideoPro &f- 视频列表"
+size: 5
+
+# 布局结构
+layout:
+  - "# # # # # # # # #"
+  - "# x x x x x x x #"
+  - "# x x x x x x x #"
+  - "# x x x x x x x #"
+  - "# < # # b # # > #"
+
+# 物品配置
+items:
+  '#':
+    type: "border"
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: "&f "
+    
+  'x':
+    type: "video_item"
+    # 动态生成，不需要固定配置
+    
+  '<':
+    type: "previous_page"
+    material: "ARROW"
+    name: "&7上一页"
+    lore:
+      - "&7点击查看上一页"
+      
+  '>':
+    type: "next_page"
+    material: "ARROW"
+    name: "&7下一页"
+    lore:
+      - "&7点击查看下一页"
+      
+  'b':
+    type: "back"
+    material: "ARROW"
+    name: "&c&l返回"
+    lore:
+      - "&7返回主菜单"
+      - ""
+      - "&e左键点击"
+    action: "back_to_main"
+
+# 视频项目显示配置
+video_item:
+  enabled_material: "EMERALD"
+  disabled_material: "REDSTONE"
+  default_material: "BOOK"
+  
+  # 默认视频项目配置
+  default_name: "&6&l默认奖励配置"
+  default_lore:
+    - "&7适用于所有未特别配置的视频"
+    - "&7状态: {status}"
+    - ""
+    - "&e左键: 查看脚本详情"
+    
+  # 特定视频项目配置
+  specific_name: "&6&l{bvid}"
+  specific_lore:
+    - "&7BV号: &f{bvid}"
+    - "&7状态: {status}"
+    - "&7奖励预览:"
+    - "{reward_preview}"
+    - ""
+    - "&e左键: 检查一键三联"
+    - "&e右键: 快速检查"
+    - "&e Shift+左键: 查看完整脚本"
