@@ -15,6 +15,7 @@ import org.bukkit.entity.Player
 import taboolib.common.platform.command.*
 import online.bingzi.bilibili.video.pro.internal.validation.InputValidator
 import online.bingzi.bilibili.video.pro.internal.monitor.SystemMonitor
+import online.bingzi.bilibili.video.pro.internal.cache.CacheCleanupManager
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.ProxyPlayer
 import taboolib.module.configuration.Config
@@ -33,12 +34,7 @@ object BilibiliVideoProCommand {
     @Config("config.yml")
     lateinit var config: Configuration
     
-    // 冷却时间管理
-    private val playerCooldowns = ConcurrentHashMap<String, Long>()
-    private val videoCooldowns = ConcurrentHashMap<String, Long>()
-    
-    // 正在进行的登录会话 - 简化版本，不追踪任务引用
-    private val loginSessions = ConcurrentHashMap<String, String>() // playerUuid -> qrcodeKey
+    // 移除旧的内存泄漏风险的缓存，改用CacheCleanupManager
     
     /**
      * 主命令 - 显示帮助信息
@@ -284,10 +280,10 @@ object BilibiliVideoProCommand {
             }
             
             // 检查是否已经在登录中
-            val existingSession = loginSessions[player.uniqueId.toString()]
+            val existingSession = CacheCleanupManager.getLoginSession(player.uniqueId.toString())
             if (existingSession != null) {
                 // 移除现有会话
-                loginSessions.remove(player.uniqueId.toString())
+                CacheCleanupManager.removeLoginSession(player.uniqueId.toString())
                 submit(async = false) {
                     player.sendLang("loginCancelled")
                 }
@@ -339,7 +335,7 @@ object BilibiliVideoProCommand {
         val playerUuid = player.uniqueId.toString()
         
         // 注册登录会话
-        loginSessions[playerUuid] = qrcodeKey
+        CacheCleanupManager.setLoginSession(playerUuid, qrcodeKey)
         
         var attempts = 0
         
@@ -350,7 +346,7 @@ object BilibiliVideoProCommand {
                 // 检查是否已经超时
                 if (attempts > maxAttempts) {
                     // 清理会话
-                    loginSessions.remove(playerUuid)
+                    CacheCleanupManager.removeLoginSession(playerUuid)
                     
                     submit(async = false) {
                         player.sendLang("loginTimeout")
@@ -359,7 +355,7 @@ object BilibiliVideoProCommand {
                 }
                 
                 // 检查会话是否仍然存在（可能被取消）
-                if (!loginSessions.containsKey(playerUuid)) {
+                if (!CacheCleanupManager.hasLoginSession(playerUuid)) {
                     return@submit
                 }
                 
@@ -367,7 +363,7 @@ object BilibiliVideoProCommand {
                 when (statusResult) {
                     is LoginPollResult.Success -> {
                         // 清理会话
-                        loginSessions.remove(playerUuid)
+                        CacheCleanupManager.removeLoginSession(playerUuid)
                         
                         // 暂时简化处理，只显示成功消息
                         submit(async = false) {
@@ -377,7 +373,7 @@ object BilibiliVideoProCommand {
                     is LoginPollResult.WaitingScan,
                     is LoginPollResult.WaitingConfirm -> {
                         // 检查会话是否仍然存在（可能被取消）
-                        if (loginSessions.containsKey(playerUuid)) {
+                        if (CacheCleanupManager.hasLoginSession(playerUuid)) {
                             // 继续等待
                             submit(async = false, delay = checkInterval) {
                                 checkLoginStatus()
@@ -386,7 +382,7 @@ object BilibiliVideoProCommand {
                     }
                     is LoginPollResult.Expired -> {
                         // 清理会话
-                        loginSessions.remove(playerUuid)
+                        CacheCleanupManager.removeLoginSession(playerUuid)
                         
                         submit(async = false) {
                             player.sendLang("loginExpired")
@@ -394,7 +390,7 @@ object BilibiliVideoProCommand {
                     }
                     is LoginPollResult.Error -> {
                         // 清理会话
-                        loginSessions.remove(playerUuid)
+                        CacheCleanupManager.removeLoginSession(playerUuid)
                         
                         submit(async = false) {
                             player.sendLang("loginError", statusResult.message)
@@ -508,14 +504,11 @@ object BilibiliVideoProCommand {
      * 检查冷却时间
      */
     private fun isOnCooldown(player: Player, bvid: String): Boolean {
-        val now = System.currentTimeMillis()
         val playerUuid = player.uniqueId.toString()
         
         // 检查全局冷却
-        val globalCooldown = config.getInt("triple_action_rewards.cooldown.global", 300) * 1000
-        val lastGlobalTime = playerCooldowns[playerUuid] ?: 0
-        if (now - lastGlobalTime < globalCooldown) {
-            val remainingTime = (globalCooldown - (now - lastGlobalTime)) / 1000
+        if (CacheCleanupManager.isPlayerOnCooldown(playerUuid)) {
+            val remainingTime = CacheCleanupManager.getPlayerCooldownRemaining(playerUuid)
             submit(async = false) {
                 player.sendLang("globalCooldown", remainingTime)
             }
@@ -523,11 +516,8 @@ object BilibiliVideoProCommand {
         }
         
         // 检查视频冷却
-        val videoCooldown = config.getInt("triple_action_rewards.cooldown.per_video", 3600) * 1000
-        val videoKey = "${playerUuid}_${bvid}"
-        val lastVideoTime = videoCooldowns[videoKey] ?: 0
-        if (now - lastVideoTime < videoCooldown) {
-            val remainingTime = (videoCooldown - (now - lastVideoTime)) / 1000
+        if (CacheCleanupManager.isVideoOnCooldown(playerUuid, bvid)) {
+            val remainingTime = CacheCleanupManager.getVideoCooldownRemaining(playerUuid, bvid)
             submit(async = false) {
                 player.sendLang("videoCooldown", remainingTime)
             }
@@ -541,12 +531,12 @@ object BilibiliVideoProCommand {
      * 设置冷却时间
      */
     private fun setCooldown(player: Player, bvid: String) {
-        val now = System.currentTimeMillis()
         val playerUuid = player.uniqueId.toString()
-        val videoKey = "${playerUuid}_${bvid}"
+        val globalCooldown = config.getInt("triple_action_rewards.cooldown.global", 300)
+        val videoCooldown = config.getInt("triple_action_rewards.cooldown.per_video", 3600)
         
-        playerCooldowns[playerUuid] = now
-        videoCooldowns[videoKey] = now
+        CacheCleanupManager.setPlayerCooldown(playerUuid, globalCooldown)
+        CacheCleanupManager.setVideoCooldown(playerUuid, bvid, videoCooldown)
     }
     
     /**

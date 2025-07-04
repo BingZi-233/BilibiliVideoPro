@@ -1,5 +1,6 @@
 package online.bingzi.bilibili.video.pro.internal.error
 
+import online.bingzi.bilibili.video.pro.internal.security.LogSecurityFilter
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
 import java.time.LocalDateTime
@@ -110,25 +111,38 @@ object ErrorHandler {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val timestamp = context.timestamp.format(formatter)
         
+        // 判断是否为生产环境
+        val isProduction = !isDebugMode()
+        
         console().sendInfo("=== 错误报告 ===")
         console().sendInfo("时间: $timestamp")
         console().sendInfo("类型: ${context.type}")
         console().sendInfo("组件: ${context.component}")
         console().sendInfo("操作: ${context.operation}")
         console().sendInfo("异常: ${context.exception.javaClass.simpleName}")
-        console().sendInfo("消息: ${context.exception.message}")
+        
+        // 过滤敏感信息后记录错误消息
+        val safeMessage = LogSecurityFilter.filterForEnvironment(
+            context.exception.message ?: "未知错误", 
+            isProduction
+        )
+        console().sendInfo("消息: $safeMessage")
         
         if (context.metadata.isNotEmpty()) {
             console().sendInfo("元数据:")
             context.metadata.forEach { (key, value) ->
-                console().sendInfo("  $key: $value")
+                val safeValue = LogSecurityFilter.filterForEnvironment(value.toString(), isProduction)
+                console().sendInfo("  $key: $safeValue")
             }
         }
         
-        // 打印堆栈跟踪（仅在调试模式下）
+        // 打印堆栈跟踪（仅在调试模式下，且经过安全过滤）
         if (isDebugMode()) {
             console().sendInfo("堆栈跟踪:")
-            context.exception.printStackTrace()
+            val safeStackTrace = LogSecurityFilter.filterStackTrace(
+                context.exception.stackTraceToString()
+            )
+            console().sendInfo(safeStackTrace)
         }
         
         console().sendInfo("================")

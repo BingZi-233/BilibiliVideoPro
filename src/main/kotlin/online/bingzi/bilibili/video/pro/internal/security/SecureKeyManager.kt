@@ -3,6 +3,8 @@ package online.bingzi.bilibili.video.pro.internal.security
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.attribute.*
 import java.security.SecureRandom
 import javax.crypto.SecretKey
 
@@ -77,16 +79,79 @@ object SecureKeyManager {
             val keyString = CookieEncryption.keyToString(key)
             keyFile.writeText(keyString)
             
-            // 设置文件权限（仅Unix系统）
+            // 使用Java NIO.2 API设置文件权限（更安全的方式）
             try {
-                val process = Runtime.getRuntime().exec(arrayOf("chmod", KEY_FILE_PERMISSIONS, keyFile.absolutePath))
-                process.waitFor()
+                if (System.getProperty("os.name").lowercase().contains("windows")) {
+                    // Windows系统：设置只有当前用户可访问
+                    setWindowsFilePermissions(keyFile)
+                } else {
+                    // Unix系统：设置权限为600（只有所有者可读写）
+                    setUnixFilePermissions(keyFile)
+                }
             } catch (e: Exception) {
-                console().sendInfo("无法设置密钥文件权限: ${e.message}")
+                console().sendInfo("设置密钥文件权限时出错: ${e.message}")
+                // 权限设置失败时抛出异常，因为这是安全关键操作
+                throw SecurityException("无法设置安全的文件权限，密钥文件可能不安全", e)
             }
             
         } catch (e: Exception) {
             throw SecurityException("无法保存密钥到文件: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 设置Windows文件权限
+     */
+    private fun setWindowsFilePermissions(file: File) {
+        try {
+            val path = file.toPath()
+            val acl = Files.getFileAttributeView(path, AclFileAttributeView::class.java)
+            
+            if (acl != null) {
+                // 获取当前用户
+                val currentUser = path.fileSystem.userPrincipalLookupService
+                    .lookupPrincipalByName(System.getProperty("user.name"))
+                
+                // 清除现有权限
+                acl.acl = emptyList()
+                
+                // 设置只有当前用户的完全控制权限
+                val entry = AclEntry.newBuilder()
+                    .setType(AclEntryType.ALLOW)
+                    .setPrincipal(currentUser)
+                    .setPermissions(
+                        AclEntryPermission.READ_DATA,
+                        AclEntryPermission.WRITE_DATA,
+                        AclEntryPermission.READ_ATTRIBUTES,
+                        AclEntryPermission.WRITE_ATTRIBUTES,
+                        AclEntryPermission.READ_ACL,
+                        AclEntryPermission.WRITE_ACL,
+                        AclEntryPermission.DELETE
+                    )
+                    .build()
+                
+                acl.acl = listOf(entry)
+                console().sendInfo("已设置Windows文件权限")
+            }
+        } catch (e: Exception) {
+            throw SecurityException("设置Windows文件权限失败: ${e.message}", e)
+        }
+    }
+    
+    /**
+     * 设置Unix文件权限
+     */
+    private fun setUnixFilePermissions(file: File) {
+        try {
+            val path = file.toPath()
+            val permissions = setOf(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE
+            )
+            Files.setPosixFilePermissions(path, permissions)
+            console().sendInfo("已设置Unix文件权限为600")
+        } catch (e: Exception) {
+            throw SecurityException("设置Unix文件权限失败: ${e.message}", e)
         }
     }
     

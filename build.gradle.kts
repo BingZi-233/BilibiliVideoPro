@@ -75,6 +75,7 @@ dependencies {
     // ORM数据库持久化 - ORMLite
     taboo("com.j256.ormlite:ormlite-core:6.1")
     taboo("com.j256.ormlite:ormlite-jdbc:6.1")
+    
 
     // 数据库驱动
     taboo("org.xerial:sqlite-jdbc:3.44.1.0")    // SQLite驱动
