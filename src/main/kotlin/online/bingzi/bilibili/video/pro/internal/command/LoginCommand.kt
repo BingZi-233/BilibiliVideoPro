@@ -1,25 +1,16 @@
 package online.bingzi.bilibili.video.pro.internal.command
 
 import com.google.gson.JsonParser
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.EncodeHintType
-import com.google.zxing.qrcode.QRCodeWriter
 import okhttp3.*
+import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
 import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
-import org.bukkit.map.MapRenderer
-import org.bukkit.map.MapView
 import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
 import taboolib.common.platform.command.mainCommand
 import taboolib.common.platform.command.subCommand
-import taboolib.common.platform.function.adaptPlayer
 import taboolib.module.chat.colored
 import taboolib.platform.util.bukkitPlugin
-import java.awt.Color
-import java.awt.image.BufferedImage
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -96,17 +87,17 @@ object LoginCommand {
                     )
                     loginSessions[playerUUID] = session
                     
-                    // 在主线程中创建地图物品
-                    Bukkit.getScheduler().runTask(bukkitPlugin) {
-                        val mapItem = createQRCodeMap(qrData.url)
-                        player.inventory.addItem(mapItem)
-                        player.sendMessage("&a二维码已生成！请查看您的物品栏中的地图物品".colored())
-                        player.sendMessage("&e请使用Bilibili手机APP扫描二维码进行登录".colored())
-                        player.sendMessage("&7提示：使用 /bilibililogin status 检查登录状态".colored())
-                        
-                        // 开始轮询登录状态
-                        startPollingLoginStatus(player, session)
-                    }
+                                         // 在主线程中创建地图物品
+                     Bukkit.getScheduler().runTask(bukkitPlugin) {
+                         val mapItem = createQRCodeMap(qrData.url, qrData.oauthKey)
+                         player.inventory.addItem(mapItem)
+                         player.sendMessage("&a二维码已生成！请查看您的物品栏中的地图物品".colored())
+                         player.sendMessage("&e请使用Bilibili手机APP扫描二维码进行登录".colored())
+                         player.sendMessage("&7提示：使用 /bilibililogin status 检查登录状态".colored())
+                         
+                         // 开始轮询登录状态
+                         startPollingLoginStatus(player, session)
+                     }
                 } else {
                     Bukkit.getScheduler().runTask(bukkitPlugin) {
                         player.sendMessage("&c获取登录二维码失败，请稍后重试".colored())
@@ -152,35 +143,8 @@ object LoginCommand {
     /**
      * 创建二维码地图物品
      */
-    private fun createQRCodeMap(qrUrl: String): ItemStack {
-        val mapItem = ItemStack(Material.FILLED_MAP)
-        val mapMeta = mapItem.itemMeta
-        
-        // 创建地图视图
-        val mapView = Bukkit.createMap(Bukkit.getWorlds()[0])
-        mapMeta?.setDisplayName("&aBilibili登录二维码".colored())
-        mapMeta?.lore = listOf(
-            "&7请使用Bilibili手机APP扫描".colored(),
-            "&7扫描后等待登录完成".colored()
-        )
-        
-        mapItem.itemMeta = mapMeta
-
-        // 清除默认渲染器
-        mapView.renderers.clear()
-        
-        // 添加自定义二维码渲染器
-        mapView.addRenderer(QRCodeMapRenderer(qrUrl))
-        
-        // 将地图ID存储到物品中
-        val itemMeta = mapItem.itemMeta
-        if (itemMeta is org.bukkit.inventory.meta.MapMeta) {
-            itemMeta.mapView = mapView
-            mapItem.itemMeta = itemMeta
-        }
-        
-        return mapItem
-    }
+    private fun createQRCodeMap(qrUrl: String, oauthKey: String) = 
+        MapItemHelper.createBilibiliLoginQRCodeMap(qrUrl, oauthKey)
 
     /**
      * 开始轮询登录状态
@@ -324,52 +288,5 @@ object LoginCommand {
         val cookies: String?
     )
 
-    /**
-     * 二维码地图渲染器
-     */
-    class QRCodeMapRenderer(private val qrUrl: String) : MapRenderer() {
-        private var hasRendered = false
 
-        override fun render(map: MapView, canvas: org.bukkit.map.MapCanvas, player: Player) {
-            if (hasRendered) return
-            
-            try {
-                val qrImage = generateQRCodeImage(qrUrl, 128, 128)
-                
-                for (x in 0 until 128) {
-                    for (y in 0 until 128) {
-                        val rgb = qrImage.getRGB(x, y)
-                        val color = if (Color(rgb).red < 128) {
-                            org.bukkit.map.MapPalette.BLACK
-                        } else {
-                            org.bukkit.map.MapPalette.WHITE
-                        }
-                        canvas.setPixel(x, y, color)
-                    }
-                }
-                
-                hasRendered = true
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
-        private fun generateQRCodeImage(content: String, width: Int, height: Int): BufferedImage {
-            val hints = mapOf(
-                EncodeHintType.CHARACTER_SET to "UTF-8",
-                EncodeHintType.MARGIN to 1
-            )
-            
-            val bitMatrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, width, height, hints)
-            val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-            
-            for (x in 0 until width) {
-                for (y in 0 until height) {
-                    image.setRGB(x, y, if (bitMatrix[x, y]) Color.BLACK.rgb else Color.WHITE.rgb)
-                }
-            }
-            
-            return image
-        }
-    }
 }
