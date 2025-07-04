@@ -5,7 +5,7 @@ import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
-import taboolib.module.lang.sendInfo
+import taboolib.module.lang.sendLang
 
 /**
  * 插件管理器
@@ -24,26 +24,26 @@ object PluginManager {
             return
         }
         
-        console().sendInfo("正在初始化 BilibiliVideoPro...")
+        console().sendLang("pluginInitializing")
         
         try {
             // 初始化数据库
             if (DatabaseManager.initialize()) {
-                console().sendInfo("数据库初始化成功")
+                console().sendLang("pluginDatabaseSuccess")
                 
                 // 初始化网络管理器
                 BilibiliNetworkManager.getInstance().initialize()
-                console().sendInfo("网络管理器初始化完成")
+                console().sendLang("pluginNetworkInitialized")
                 
                 isInitialized = true
-                console().sendInfo("BilibiliVideoPro 初始化完成")
+                console().sendLang("pluginInitializationSuccess")
                 
             } else {
-                console().sendInfo("数据库初始化失败，插件功能可能无法正常使用")
+                console().sendLang("pluginDatabaseFailed")
             }
             
         } catch (e: Exception) {
-            console().sendInfo("初始化过程中发生异常: ${e.message}")
+            console().sendLang("pluginInitializationFailed", e.message ?: "Unknown error")
             e.printStackTrace()
         }
     }
@@ -54,7 +54,7 @@ object PluginManager {
     @Awake(value = LifeCycle.ACTIVE)
     fun healthCheck() {
         if (!isInitialized) {
-            console().sendInfo("插件未正确初始化，跳过健康检查")
+            console().sendLang("pluginInitializationNotInitialized")
             return
         }
         
@@ -62,13 +62,13 @@ object PluginManager {
             // 执行数据库健康检查
             val healthInfo = DatabaseManager.healthCheck()
             if (healthInfo.isHealthy) {
-                console().sendInfo("数据库连接正常")
+                console().sendLang("pluginDatabaseHealthy")
             } else {
-                console().sendInfo("数据库连接异常: ${healthInfo.message}")
+                console().sendLang("pluginDatabaseUnhealthy", healthInfo.message)
             }
             
         } catch (e: Exception) {
-            console().sendInfo("健康检查过程中发生异常: ${e.message}")
+            console().sendLang("pluginHealthCheckFailed", e.message ?: "Unknown error")
         }
     }
     
@@ -81,22 +81,22 @@ object PluginManager {
             return
         }
         
-        console().sendInfo("正在关闭 BilibiliVideoPro...")
+        console().sendLang("pluginShutdownStarting")
         
         try {
             // 关闭网络管理器
             BilibiliNetworkManager.destroyInstance()
-            console().sendInfo("网络管理器已关闭")
+            console().sendLang("pluginNetworkClosed")
             
             // 关闭数据库连接
             DatabaseManager.close()
-            console().sendInfo("数据库连接已关闭")
+            console().sendLang("pluginShutdownDatabaseClosed")
             
             isInitialized = false
-            console().sendInfo("BilibiliVideoPro 已完全关闭")
+            console().sendLang("pluginShutdownSuccess")
             
         } catch (e: Exception) {
-            console().sendInfo("关闭过程中发生异常: ${e.message}")
+            console().sendLang("pluginShutdownFailed", e.message ?: "Unknown error")
         }
     }
     
@@ -111,7 +111,7 @@ object PluginManager {
      * 手动重新初始化（用于调试或命令）
      */
     fun reinitialize() {
-        console().sendInfo("正在重新初始化插件...")
+        console().sendLang("pluginReinitialize")
         cleanup()
         Thread.sleep(1000) // 等待资源完全释放
         initialize()
