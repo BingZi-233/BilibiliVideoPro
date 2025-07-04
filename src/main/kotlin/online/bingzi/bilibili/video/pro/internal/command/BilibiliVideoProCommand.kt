@@ -3,6 +3,7 @@ package online.bingzi.bilibili.video.pro.internal.command
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliApiClient
 import online.bingzi.bilibili.video.pro.internal.network.auth.QRCodeLoginService
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
@@ -30,7 +31,7 @@ object BilibiliVideoProCommand {
     @CommandBody
     val main = mainCommand {
         createHelper()
-        execute<Any> { sender, _, _ ->
+        execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&6&l========== BilibiliVideoPro ==========".colored())
             sender.sendMessage("&a版本: &f1.0.0".colored())
             sender.sendMessage("&a作者: &fBingZi-233".colored())
@@ -47,7 +48,7 @@ object BilibiliVideoProCommand {
     @CommandBody
     val info = subCommand {
         literal("info")
-        execute<Any> { sender, _, _ ->
+        execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&6&l========== 插件信息 ==========".colored())
             sender.sendMessage("&a插件名称: &fBilibiliVideoPro".colored())
             sender.sendMessage("&a插件版本: &f1.0.0".colored())
@@ -64,9 +65,6 @@ object BilibiliVideoProCommand {
 
     @CommandBody
     val login = subCommand {
-        literal("login", "登录")
-        // 权限要求：只有拥有 bilibilipro.login 权限的玩家可以使用
-        permission("bilibilipro.login")
         execute<Player> { sender, _, _ ->
             startLogin(sender)
         }
@@ -74,9 +72,6 @@ object BilibiliVideoProCommand {
 
     @CommandBody
     val status = subCommand {
-        literal("status", "状态")
-        // 权限要求：只有拥有 bilibilipro.status 权限的玩家可以使用
-        permission("bilibilipro.status")
         execute<Player> { sender, _, _ ->
             checkLoginStatus(sender)
         }
@@ -84,10 +79,7 @@ object BilibiliVideoProCommand {
 
     @CommandBody
     val reload = subCommand {
-        literal("reload", "重载")
-        // 权限要求：只有管理员可以重载配置
-        permission("bilibilipro.admin.reload")
-        execute<Any> { sender, _, _ ->
+        execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&a正在重载插件配置...".colored())
             // 这里可以添加重载逻辑
             sender.sendMessage("&a配置重载完成！".colored())
