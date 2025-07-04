@@ -7,9 +7,9 @@ triple_action_rewards:
   default:
     enabled: true
     reward_script: |
-      tell *"&a恭喜！您已完成一键三联！"
+      tell "§a恭喜！您已完成一键三联！"
       give diamond 1
-      sound ENTITY_EXPERIENCE_ORB_PICKUP 1 1
+      sound entity.experience_orb.pickup 1.0 1.0
   
   # 特定BV号的奖励配置
   specific_videos:
@@ -17,35 +17,35 @@ triple_action_rewards:
     "BV1234567890":
       enabled: true
       reward_script: |
-        tell *"&6&l恭喜完成特殊视频的一键三联！"
-        tell *"&e获得特殊奖励！"
+        tell "§6§l恭喜完成特殊视频的一键三联！"
+        tell "§e获得特殊奖励！"
         give diamond 5
         give emerald 3
-        sound ENTITY_PLAYER_LEVELUP 1 1
+        sound entity.player.levelup 1.0 1.0
         
     # 示例配置2 - 经验奖励
     "BV0987654321":
       enabled: true
       reward_script: |
-        tell *"&b恭喜完成教程视频的一键三联！"
-        tell *"&7获得经验奖励！"
-        give experience 100
-        sound ENTITY_EXPERIENCE_ORB_PICKUP 1 2
+        tell "§b恭喜完成教程视频的一键三联！"
+        tell "§7获得经验奖励！"
+        command "xp add {{ sender.name }} 100"
+        sound entity.experience_orb.pickup 1.0 2.0
         
     # 示例配置3 - 金币奖励
     "BV1111111111":
       enabled: true
       reward_script: |
-        tell *"&e恭喜完成活动视频的一键三联！"
-        tell *"&6获得金币奖励！"
+        tell "§e恭喜完成活动视频的一键三联！"
+        tell "§6获得金币奖励！"
         give gold_ingot 10
-        sound BLOCK_ANVIL_USE 1 1
+        sound block.anvil.use 1.0 1.0
         
     # 示例配置4 - 禁用奖励
     "BV2222222222":
       enabled: false
       reward_script: |
-        tell *"&c此视频暂不提供奖励"
+        tell "§c此视频暂不提供奖励"
 
   # 冷却时间设置 (秒)
   cooldown:

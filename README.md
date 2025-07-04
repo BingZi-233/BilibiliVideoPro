@@ -143,9 +143,9 @@ triple_action_rewards:
   default:
     enabled: true
     reward_script: |
-      tell *"&a恭喜！您已完成一键三联！"
+      tell "§a恭喜！您已完成一键三联！"
       give diamond 1
-      sound ENTITY_EXPERIENCE_ORB_PICKUP 1 1
+      sound entity.experience_orb.pickup 1.0 1.0
 ```
 
 #### 特定BV号奖励
@@ -156,26 +156,26 @@ triple_action_rewards:
     "BV1234567890":
       enabled: true
       reward_script: |
-        tell *"&6&l恭喜完成特殊视频的一键三联！"
-        tell *"&e获得豪华奖励包！"
+        tell "§6§l恭喜完成特殊视频的一键三联！"
+        tell "§e获得豪华奖励包！"
         give diamond 5
         give emerald 3
         give gold_ingot 10
-        sound ENTITY_PLAYER_LEVELUP 1 1
+        sound entity.player.levelup 1.0 1.0
         
     # 经验奖励示例
     "BV0987654321":
       enabled: true
       reward_script: |
-        tell *"&b恭喜完成教程视频的一键三联！"
-        give experience 100
-        sound ENTITY_EXPERIENCE_ORB_PICKUP 1 2
+        tell "§b恭喜完成教程视频的一键三联！"
+        command "xp add {{ sender.name }} 100"
+        sound entity.experience_orb.pickup 1.0 2.0
         
     # 禁用奖励示例
     "BV1111111111":
       enabled: false
       reward_script: |
-        tell *"&c此视频暂不提供奖励"
+        tell "§c此视频暂不提供奖励"
 ```
 
 #### 冷却时间设置
@@ -220,47 +220,119 @@ database:
 ### 💎 基础奖励
 ```yaml
 reward_script: |
-  tell *"&a恭喜完成一键三联！"
+  tell "§a恭喜完成一键三联！"
   give diamond 1
-  sound ENTITY_EXPERIENCE_ORB_PICKUP 1 1
+  sound entity.experience_orb.pickup 1.0 1.0
 ```
 
 ### 🏆 豪华奖励包
 ```yaml
 reward_script: |
-  tell *"&6&l豪华奖励包！"
+  tell "§6§l豪华奖励包！"
   give diamond 5
   give emerald 3
   give gold_ingot 10
-  give experience 200
-  sound ENTITY_PLAYER_LEVELUP 1 1
-  title *"" "&6&l恭喜获得豪华奖励！" 10 60 10
+  command "xp add {{ sender.name }} 200"
+  sound entity.player.levelup 1.0 1.0
+  title 10 60 10 "" "§6§l恭喜获得豪华奖励！"
 ```
 
 ### 💰 经济奖励 (需要经济插件)
 ```yaml
 reward_script: |
-  tell *"&e获得金币奖励！"
-  eco give *player 1000
-  sound BLOCK_ANVIL_USE 1 1
+  tell "§e获得金币奖励！"
+  command "eco give {{ sender.name }} 1000"
+  sound block.anvil.use 1.0 1.0
 ```
 
 ### 🎉 随机奖励
 ```yaml
 reward_script: |
-  tell *"&d幸运抽奖开始！"
-  random 3
-  case 0:
+  tell "§d幸运抽奖开始！"
+  set random to random 3
+  if &random == 0 then {
     give diamond 3
-    tell *"&b获得钻石奖励！"
-  case 1:
+    tell "§b获得钻石奖励！"
+  }
+  if &random == 1 then {
     give emerald 5
-    tell *"&a获得绿宝石奖励！"
-  case 2:
-    give experience 150
-    tell *"&e获得经验奖励！"
-  sound ENTITY_EXPERIENCE_ORB_PICKUP 1 1
+    tell "§a获得绿宝石奖励！"
+  }
+  if &random == 2 then {
+    command "xp add {{ sender.name }} 150"
+    tell "§e获得经验奖励！"
+  }
+  sound entity.experience_orb.pickup 1.0 1.0
 ```
+
+### 🎁 条件奖励 (根据玩家等级)
+```yaml
+reward_script: |
+  set level to player exp level
+  if &level >= 30 then {
+    tell "§6高级玩家奖励！"
+    give diamond 3
+    give emerald 2
+  } else if &level >= 10 then {
+    tell "§e中级玩家奖励！"
+    give diamond 1
+    give iron_ingot 5
+  } else {
+    tell "§a新手玩家奖励！"
+    give iron_ingot 2
+    command "xp add {{ sender.name }} 50"
+  }
+  sound entity.experience_orb.pickup 1.0 1.0
+```
+
+### 📝 Kether语法说明
+
+#### 基本命令
+- **tell**: 发送消息给玩家
+  ```
+  tell "§a消息内容"
+  ```
+- **give**: 给予玩家物品
+  ```
+  give 物品名 数量
+  give diamond 5
+  ```
+- **sound**: 播放声音
+  ```
+  sound 声音名 音量 音调
+  sound entity.experience_orb.pickup 1.0 1.0
+  ```
+- **command**: 执行控制台命令
+  ```
+  command "xp add {{ sender.name }} 100"
+  ```
+- **title**: 显示标题
+  ```
+  title 淡入时间 显示时间 淡出时间 "主标题" "副标题"
+  ```
+
+#### 变量使用
+- **设置变量**: `set 变量名 to 值`
+- **使用变量**: `&变量名`
+- **玩家变量**: `{{ sender.name }}` (玩家名称)
+
+#### 条件语句
+```yaml
+if 条件 then {
+  # 执行代码
+} else if 条件 then {
+  # 执行代码
+} else {
+  # 执行代码
+}
+```
+
+#### 常用声音效果
+- `entity.experience_orb.pickup` - 经验球拾取
+- `entity.player.levelup` - 玩家升级
+- `block.anvil.use` - 铁砧使用
+- `entity.villager.yes` - 村民确认
+- `block.note_block.pling` - 音符盒音效
 
 ---
 
