@@ -131,17 +131,17 @@ class BilibiliApiClient {
         
         repeat(maxRetries) { attempt ->
             try {
-                console().sendInfo("执行网络请求 (尝试 ${attempt + 1}/$maxRetries): ${request.url}")
+                console().sendInfo("networkRequestExecuting", (attempt + 1).toString(), maxRetries.toString(), request.url.toString())
                 
                 val response = okHttpClient.newCall(request).execute()
                 val responseBody = response.body?.string() ?: ""
                 
                 if (response.isSuccessful) {
-                    console().sendInfo("网络请求成功: ${request.url}")
+                    console().sendInfo("networkRequestSuccess", request.url.toString())
                     return ApiResponse.success(responseBody)
                 } else {
                     val errorMsg = "HTTP ${response.code}: ${response.message}"
-                    console().sendInfo("网络请求失败: $errorMsg")
+                    console().sendInfo("networkRequestFailed", errorMsg)
                     
                     // 如果是客户端错误（4xx），不重试
                     if (response.code in 400..499) {
@@ -165,7 +165,7 @@ class BilibiliApiClient {
                 
             } catch (e: Exception) {
                 lastException = e
-                console().sendInfo("网络请求异常 (尝试 ${attempt + 1}/$maxRetries): ${e.message}")
+                console().sendInfo("networkRequestException", (attempt + 1).toString(), maxRetries.toString(), e.message ?: "unknown")
                 
                 // 记录错误但继续重试
                 ErrorHandler.handleError(
@@ -196,7 +196,7 @@ class BilibiliApiClient {
         
         // 所有重试都失败了
         val finalError = lastException ?: Exception("Unknown network error")
-        console().sendInfo("网络请求最终失败: ${finalError.message}")
+        console().sendInfo("networkRequestFinalFailure", finalError.message ?: "unknown")
         
         ErrorHandler.handleError(
             type = ErrorHandler.ErrorType.NETWORK,

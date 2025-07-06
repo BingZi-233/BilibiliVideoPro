@@ -40,7 +40,7 @@ object CacheCleanupManager {
      */
     @Awake(LifeCycle.ENABLE)
     fun startCleanupTask() {
-        console().sendInfo("启动缓存清理任务...")
+        console().sendInfo("cacheCleanupStarted")
         
         submit(async = true, delay = CLEANUP_INTERVAL, period = CLEANUP_INTERVAL) {
             performCleanup()
@@ -86,14 +86,14 @@ object CacheCleanupManager {
             }
             
             if (totalCleaned > 0) {
-                console().sendInfo("缓存清理完成，清理了 $totalCleaned 个过期项目")
+                console().sendInfo("cacheCleanupCompleted", totalCleaned.toString())
             }
             
             // 记录缓存统计信息
             logCacheStatistics()
             
         } catch (e: Exception) {
-            console().sendInfo("缓存清理过程中出错: ${e.message}")
+            console().sendInfo("cacheCleanupError", e.message ?: "unknown")
         }
     }
     
@@ -105,7 +105,7 @@ object CacheCleanupManager {
         val videoCooldownSize = videoCooldownCache.size
         val loginSessionSize = loginSessionCache.size
         
-        console().sendInfo("缓存统计 - 玩家冷却: $playerCooldownSize, 视频冷却: $videoCooldownSize, 登录会话: $loginSessionSize")
+        console().sendInfo("cacheStatistics", playerCooldownSize.toString(), videoCooldownSize.toString(), loginSessionSize.toString())
     }
     
     /**
@@ -234,6 +234,6 @@ object CacheCleanupManager {
         playerCooldownCache.clear()
         videoCooldownCache.clear()
         loginSessionCache.clear()
-        console().sendInfo("所有缓存已清空")
+        console().sendInfo("cacheAllCleared")
     }
 }

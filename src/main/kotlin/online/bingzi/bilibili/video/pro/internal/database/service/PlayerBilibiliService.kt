@@ -31,7 +31,7 @@ object PlayerBilibiliService {
             // 验证输入参数
             val validation = InputValidator.validatePlayerUuid(uuid)
             if (!validation.isValid) {
-                console().sendInfo("UUID验证失败: ${validation.errorMessage}")
+                console().sendInfo("uuidValidationFailed", validation.errorMessage ?: "unknown")
                 return null
             }
             
@@ -56,7 +56,7 @@ object PlayerBilibiliService {
             // 验证输入参数
             val validation = InputValidator.validateBilibiliUid(userId)
             if (!validation.isValid) {
-                console().sendInfo("Bilibili UID验证失败: ${validation.errorMessage}")
+                console().sendInfo("bilibiliUidValidationFailed", validation.errorMessage ?: "unknown")
                 return null
             }
             
@@ -127,7 +127,7 @@ object PlayerBilibiliService {
             )
             
             playerBilibiliDao.create(playerBilibili)
-            console().sendInfo("成功创建玩家绑定: $playerName -> $bilibiliUsername")
+            console().sendInfo("playerBindingCreated", playerName, bilibiliUsername)
             
             playerBilibili
         }.let { result ->

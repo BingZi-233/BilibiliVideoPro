@@ -25,7 +25,7 @@ object SecureKeyManager {
      */
     fun initialize(pluginDataFolder: File): Boolean {
         return try {
-            console().sendInfo("正在初始化安全密钥管理器...")
+            console().sendInfo("securityKeyManagerInitializing")
             
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
             
@@ -39,11 +39,11 @@ object SecureKeyManager {
                 newKey
             }
             
-            console().sendInfo("安全密钥管理器初始化完成")
+            console().sendInfo("securityKeyManagerInitialized")
             true
             
         } catch (e: Exception) {
-            console().sendInfo("安全密钥管理器初始化失败: ${e.message}")
+            console().sendInfo("securityKeyManagerInitFailed", e.message ?: "unknown")
             e.printStackTrace()
             false
         }
@@ -89,7 +89,7 @@ object SecureKeyManager {
                     setUnixFilePermissions(keyFile)
                 }
             } catch (e: Exception) {
-                console().sendInfo("设置密钥文件权限时出错: ${e.message}")
+                console().sendInfo("securityKeyPermissionError", e.message ?: "unknown")
                 // 权限设置失败时抛出异常，因为这是安全关键操作
                 throw SecurityException("无法设置安全的文件权限，密钥文件可能不安全", e)
             }
@@ -131,7 +131,7 @@ object SecureKeyManager {
                     .build()
                 
                 acl.acl = listOf(entry)
-                console().sendInfo("已设置Windows文件权限")
+                console().sendInfo("securityKeyWindowsPermissionSet")
             }
         } catch (e: Exception) {
             throw SecurityException("设置Windows文件权限失败: ${e.message}", e)
@@ -149,7 +149,7 @@ object SecureKeyManager {
                 PosixFilePermission.OWNER_WRITE
             )
             Files.setPosixFilePermissions(path, permissions)
-            console().sendInfo("已设置Unix文件权限为600")
+            console().sendInfo("securityKeyUnixPermissionSet")
         } catch (e: Exception) {
             throw SecurityException("设置Unix文件权限失败: ${e.message}", e)
         }
@@ -161,7 +161,7 @@ object SecureKeyManager {
      */
     fun regenerateKey(pluginDataFolder: File): Boolean {
         return try {
-            console().sendInfo("正在重新生成加密密钥...")
+            console().sendInfo("securityKeyRegenerating")
             
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
             val newKey = CookieEncryption.generateKey()
@@ -169,11 +169,11 @@ object SecureKeyManager {
             saveKeyToFile(keyFile, newKey)
             encryptionKey = newKey
             
-            console().sendInfo("加密密钥重新生成完成")
+            console().sendInfo("securityKeyRegenerated")
             true
             
         } catch (e: Exception) {
-            console().sendInfo("重新生成密钥失败: ${e.message}")
+            console().sendInfo("securityKeyRegenerateFailed", e.message ?: "unknown")
             false
         }
     }
@@ -221,9 +221,9 @@ object SecureKeyManager {
     fun cleanup() {
         try {
             encryptionKey = null
-            console().sendInfo("安全密钥管理器已清理")
+            console().sendInfo("securityKeyManagerCleaned")
         } catch (e: Exception) {
-            console().sendInfo("清理密钥管理器时出错: ${e.message}")
+            console().sendInfo("securityKeyManagerCleanupError", e.message ?: "unknown")
         }
     }
 }

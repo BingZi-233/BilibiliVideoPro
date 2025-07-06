@@ -74,7 +74,7 @@ object SystemMonitor {
                 }
             }
         } catch (e: Exception) {
-            console().sendInfo("记录执行统计时出错: ${e.message}")
+            console().sendInfo("systemMonitorRecordError", e.message ?: "unknown")
         }
     }
     
@@ -103,7 +103,7 @@ object SystemMonitor {
         }
         
         return try {
-            console().sendInfo("正在执行系统健康检查...")
+            console().sendInfo("systemMonitorHealthCheck")
             
             val databaseHealth = checkDatabaseHealth()
             val securityHealth = checkSecurityHealth()
@@ -141,11 +141,11 @@ object SystemMonitor {
             cachedHealthStatus = healthStatus
             lastHealthCheck = now
             
-            console().sendInfo("系统健康检查完成，总体状态: ${overall.name}")
+            console().sendInfo("systemMonitorHealthComplete", overall.name)
             healthStatus
             
         } catch (e: Exception) {
-            console().sendInfo("系统健康检查失败: ${e.message}")
+            console().sendInfo("systemMonitorHealthFailed", e.message ?: "unknown")
             HealthStatus(
                 overall = HealthLevel.UNKNOWN,
                 database = HealthLevel.UNKNOWN,
@@ -277,7 +277,7 @@ object SystemMonitor {
                 }
             )
         } catch (e: Exception) {
-            console().sendInfo("获取性能统计时出错: ${e.message}")
+            console().sendInfo("systemMonitorStatsError", e.message ?: "unknown")
             PerformanceStats(
                 requestCounts = emptyMap(),
                 averageExecutionTimes = emptyMap(),
@@ -350,9 +350,9 @@ object SystemMonitor {
             executionTimes.clear()
             cachedHealthStatus = null
             lastHealthCheck = 0L
-            console().sendInfo("系统统计数据已清理")
+            console().sendInfo("systemStatisticsCleared")
         } catch (e: Exception) {
-            console().sendInfo("清理统计数据时出错: ${e.message}")
+            console().sendInfo("systemStatisticsClearError", e.message ?: "unknown")
         }
     }
 }

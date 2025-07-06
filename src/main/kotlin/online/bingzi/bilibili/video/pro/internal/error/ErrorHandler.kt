@@ -114,22 +114,22 @@ object ErrorHandler {
         // 判断是否为生产环境
         val isProduction = !isDebugMode()
         
-        console().sendInfo("=== 错误报告 ===")
-        console().sendInfo("时间: $timestamp")
-        console().sendInfo("类型: ${context.type}")
-        console().sendInfo("组件: ${context.component}")
-        console().sendInfo("操作: ${context.operation}")
-        console().sendInfo("异常: ${context.exception.javaClass.simpleName}")
+        console().sendInfo("errorReportHeader")
+        console().sendInfo("errorReportTimestamp", timestamp)
+        console().sendInfo("errorReportType", context.type.toString())
+        console().sendInfo("errorReportComponent", context.component)
+        console().sendInfo("errorReportOperation", context.operation)
+        console().sendInfo("errorReportException", context.exception.javaClass.simpleName)
         
         // 过滤敏感信息后记录错误消息
         val safeMessage = LogSecurityFilter.filterForEnvironment(
             context.exception.message ?: "未知错误", 
             isProduction
         )
-        console().sendInfo("消息: $safeMessage")
+        console().sendInfo("errorReportMessage", safeMessage)
         
         if (context.metadata.isNotEmpty()) {
-            console().sendInfo("元数据:")
+            console().sendInfo("errorReportMetadata")
             context.metadata.forEach { (key, value) ->
                 val safeValue = LogSecurityFilter.filterForEnvironment(value.toString(), isProduction)
                 console().sendInfo("  $key: $safeValue")
@@ -138,14 +138,14 @@ object ErrorHandler {
         
         // 打印堆栈跟踪（仅在调试模式下，且经过安全过滤）
         if (isDebugMode()) {
-            console().sendInfo("堆栈跟踪:")
+            console().sendInfo("errorReportStackTrace")
             val safeStackTrace = LogSecurityFilter.filterStackTrace(
                 context.exception.stackTraceToString()
             )
             console().sendInfo(safeStackTrace)
         }
         
-        console().sendInfo("================")
+        console().sendInfo("errorReportFooter")
     }
     
     /**
@@ -157,11 +157,11 @@ object ErrorHandler {
         for (callback in callbacks) {
             try {
                 if (callback.onError(context)) {
-                    console().sendInfo("错误已被回调处理器处理: ${context.type}-${context.component}")
+                    console().sendInfo("errorHandlerRecovered", context.type.toString(), context.component)
                     return true
                 }
             } catch (e: Exception) {
-                console().sendInfo("错误回调处理器执行失败: ${e.message}")
+                console().sendInfo("errorHandlerCallbackFailed", e.message ?: "unknown")
             }
         }
         
@@ -184,7 +184,7 @@ object ErrorHandler {
      * 数据库错误恢复
      */
     private fun attemptDatabaseRecovery(context: ErrorContext): Boolean {
-        console().sendInfo("尝试数据库错误恢复: ${context.operation}")
+        console().sendInfo("databaseRecoveryAttempt", context.operation)
         
         return try {
             // 检查数据库连接是否有效
@@ -198,14 +198,14 @@ object ErrorHandler {
                 val success = initializeMethod.invoke(databaseManager.getDeclaredField("INSTANCE").get(null)) as Boolean
                 
                 if (success) {
-                    console().sendInfo("数据库连接恢复成功")
+                    console().sendInfo("databaseRecoverySuccess")
                     return true
                 }
             }
             
             false
         } catch (e: Exception) {
-            console().sendInfo("数据库恢复失败: ${e.message}")
+            console().sendInfo("databaseRecoveryFailed", e.message ?: "unknown")
             false
         }
     }
@@ -214,16 +214,16 @@ object ErrorHandler {
      * 网络错误恢复
      */
     private fun attemptNetworkRecovery(context: ErrorContext): Boolean {
-        console().sendInfo("尝试网络错误恢复: ${context.operation}")
+        console().sendInfo("networkRecoveryAttempt", context.operation)
         
         // 对于网络错误，通常只需要简单重试
         return when {
             context.exception.message?.contains("timeout", ignoreCase = true) == true -> {
-                console().sendInfo("检测到超时错误，建议稍后重试")
+                console().sendInfo("networkTimeoutDetected")
                 false
             }
             context.exception.message?.contains("connection", ignoreCase = true) == true -> {
-                console().sendInfo("检测到连接错误，建议检查网络")
+                console().sendInfo("networkConnectionError")
                 false
             }
             else -> false
@@ -234,10 +234,10 @@ object ErrorHandler {
      * 安全错误恢复
      */
     private fun attemptSecurityRecovery(context: ErrorContext): Boolean {
-        console().sendInfo("尝试安全错误恢复: ${context.operation}")
+        console().sendInfo("securityRecoveryAttempt", context.operation)
         
         // 安全错误通常不应该自动恢复，需要管理员干预
-        console().sendInfo("安全错误需要管理员干预，停止自动恢复")
+        console().sendInfo("securityRecoveryBlocked")
         return false
     }
     
@@ -261,7 +261,7 @@ object ErrorHandler {
      */
     fun clearErrorStatistics() {
         errorStats.clear()
-        console().sendInfo("错误统计已清除")
+        console().sendInfo("errorStatisticsCleared")
     }
     
     /**

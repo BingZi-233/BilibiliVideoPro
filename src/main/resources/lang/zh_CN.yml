@@ -148,3 +148,99 @@ invalidBvid: "&c无效的BV号: {0}"
 
 # Script execution messages
 scriptExecutionError: "&c奖励脚本执行失败: {0}"
+
+# System messages - Error handling and debugging
+errorReportHeader: "=== 错误报告 ==="
+errorReportTimestamp: "时间: {0}"
+errorReportType: "类型: {0}"
+errorReportComponent: "组件: {0}"
+errorReportOperation: "操作: {0}"
+errorReportException: "异常: {0}"
+errorReportMessage: "消息: {0}"
+errorReportMetadata: "元数据:"
+errorReportStackTrace: "堆栈跟踪:"
+errorReportFooter: "================"
+errorHandlerRecovered: "错误已被回调处理器处理: {0}-{1}"
+errorHandlerCallbackFailed: "错误回调处理器执行失败: {0}"
+errorStatisticsCleared: "错误统计已清除"
+
+# Database recovery messages
+databaseRecoveryAttempt: "尝试数据库错误恢复: {0}"
+databaseRecoverySuccess: "数据库连接恢复成功"
+databaseRecoveryFailed: "数据库恢复失败: {0}"
+
+# Network recovery messages
+networkRecoveryAttempt: "尝试网络错误恢复: {0}"
+networkTimeoutDetected: "检测到超时错误，建议稍后重试"
+networkConnectionError: "检测到连接错误，建议检查网络"
+
+# Security recovery messages
+securityRecoveryAttempt: "尝试安全错误恢复: {0}"
+securityRecoveryBlocked: "安全错误需要管理员干预，停止自动恢复"
+
+# Security key manager messages
+securityKeyManagerInitializing: "正在初始化安全密钥管理器..."
+securityKeyManagerInitialized: "安全密钥管理器初始化完成"
+securityKeyManagerInitFailed: "安全密钥管理器初始化失败: {0}"
+securityKeyPermissionError: "设置密钥文件权限时出错: {0}"
+securityKeyWindowsPermissionSet: "已设置Windows文件权限"
+securityKeyUnixPermissionSet: "已设置Unix文件权限为600"
+securityKeyRegenerating: "正在重新生成加密密钥..."
+securityKeyRegenerated: "加密密钥重新生成完成"
+securityKeyRegenerateFailed: "重新生成密钥失败: {0}"
+securityKeyManagerCleaned: "安全密钥管理器已清理"
+securityKeyManagerCleanupError: "清理密钥管理器时出错: {0}"
+
+# Cache cleanup messages
+cacheCleanupStarted: "启动缓存清理任务..."
+cacheCleanupCompleted: "缓存清理完成，清理了 {0} 个过期项目"
+cacheCleanupError: "缓存清理过程中出错: {0}"
+cacheStatistics: "缓存统计 - 玩家冷却: {0}, 视频冷却: {1}, 登录会话: {2}"
+cacheAllCleared: "所有缓存已清空"
+
+# Network API client messages
+networkRequestExecuting: "执行网络请求 (尝试 {0}/{1}): {2}"
+networkRequestSuccess: "网络请求成功: {0}"
+networkRequestFailed: "网络请求失败: {0}"
+networkRequestException: "网络请求异常 (尝试 {0}/{1}): {2}"
+networkRequestFinalFailure: "网络请求最终失败: {0}"
+
+# System monitor messages
+systemMonitorRecordError: "记录执行统计时出错: {0}"
+systemMonitorHealthCheck: "正在执行系统健康检查..."
+systemMonitorHealthComplete: "系统健康检查完成，总体状态: {0}"
+systemMonitorHealthFailed: "系统健康检查失败: {0}"
+systemMonitorStatsError: "获取性能统计时出错: {0}"
+systemStatisticsCleared: "系统统计数据已清理"
+systemStatisticsClearError: "清理统计数据时出错: {0}"
+
+# Database service messages
+uuidValidationFailed: "UUID验证失败: {0}"
+bilibiliUidValidationFailed: "Bilibili UID验证失败: {0}"
+playerBindingCreated: "成功创建玩家绑定: {0} -> {1}"
+
+# Transaction manager messages
+transactionStarted: "开始数据库事务"
+transactionSuccess: "事务执行成功"
+transactionFailed: "事务执行失败: {0}"
+batchOperationStarted: "开始批量数据库操作，批次大小: {0}"
+batchOperationCompleted: "批量操作完成，处理记录数: {0}"
+batchOperationFailed: "批量操作失败: {0}"
+
+# Database manager messages
+databaseInitializing: "正在初始化数据库连接..."
+databaseType: "数据库类型: {0}"
+databaseProviderRegistered: "已注册数据库提供者: {0}"
+databaseInitialized: "数据库初始化完成"
+databaseInitFailed: "数据库初始化失败: {0}"
+databaseTableCreating: "正在创建数据库表..."
+databaseTableSkipped: "跳过自动创建表（配置已禁用）"
+databaseTableEnsured: "确保表存在: {0}"
+databaseTableCreated: "数据库表创建完成"
+databaseTableCreateFailed: "创建数据库表失败: {0}"
+databaseDaoInitializing: "正在初始化DAO..."
+databaseDaoInitialized: "DAO初始化完成"
+databaseDaoInitFailed: "DAO初始化失败: {0}"
+databaseClosing: "正在关闭数据库连接..."
+databaseClosed: "数据库连接已关闭"
+databaseCloseError: "关闭数据库连接时出错: {0}"

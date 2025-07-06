@@ -44,7 +44,7 @@ object DatabaseManager {
      */
     fun registerProvider(provider: IDatabaseProvider) {
         providers[provider.type.lowercase()] = provider
-        console().sendInfo("已注册数据库提供者: ${provider.type}")
+        console().sendInfo("databaseProviderRegistered", provider.type)
     }
 
     /**
@@ -52,10 +52,10 @@ object DatabaseManager {
      */
     fun initialize(): Boolean {
         return try {
-            console().sendInfo("正在初始化数据库连接...")
+            console().sendInfo("databaseInitializing")
 
             val dbType = DatabaseConfig.databaseType.lowercase()
-            console().sendInfo("数据库类型: $dbType")
+            console().sendInfo("databaseType", dbType)
 
             val provider = providers[dbType]
                 ?: throw IllegalStateException("不支持的数据库类型: $dbType, 请确保已注册对应的IDatabaseProvider")
@@ -66,11 +66,11 @@ object DatabaseManager {
             createTables()
             initializeDAOs()
 
-            console().sendInfo("数据库初始化完成")
+            console().sendInfo("databaseInitialized")
             true
 
         } catch (e: Exception) {
-            console().sendInfo("数据库初始化失败: ${e.message}")
+            console().sendInfo("databaseInitFailed", e.message ?: "unknown")
             e.printStackTrace()
             false
         }
@@ -81,27 +81,27 @@ object DatabaseManager {
      */
     private fun createTables() {
         if (!DatabaseConfig.autoCreateTables) {
-            console().sendInfo("跳过自动创建表（配置已禁用）")
+            console().sendInfo("databaseTableSkipped")
             return
         }
 
-        console().sendInfo("正在创建数据库表...")
+        console().sendInfo("databaseTableCreating")
 
         val connection = connectionSource ?: throw SQLException("数据库连接未初始化")
 
         try {
             // 创建玩家Bilibili绑定表
             TableUtils.createTableIfNotExists(connection, PlayerBilibili::class.java)
-            console().sendInfo("确保表存在: ${PlayerBilibili.TABLE_NAME}")
+            console().sendInfo("databaseTableEnsured", PlayerBilibili.TABLE_NAME)
 
             // 创建视频互动记录表
             TableUtils.createTableIfNotExists(connection, VideoInteractionRecord::class.java)
-            console().sendInfo("确保表存在: ${VideoInteractionRecord.TABLE_NAME}")
+            console().sendInfo("databaseTableEnsured", VideoInteractionRecord.TABLE_NAME)
 
-            console().sendInfo("数据库表创建完成")
+            console().sendInfo("databaseTableCreated")
 
         } catch (e: SQLException) {
-            console().sendInfo("创建数据库表失败: ${e.message}")
+            console().sendInfo("databaseTableCreateFailed", e.message ?: "unknown")
             throw e
         }
     }
@@ -110,7 +110,7 @@ object DatabaseManager {
      * 初始化DAO
      */
     private fun initializeDAOs() {
-        console().sendInfo("正在初始化DAO...")
+        console().sendInfo("databaseDaoInitializing")
 
         val connection = connectionSource ?: throw SQLException("数据库连接未初始化")
 
@@ -118,10 +118,10 @@ object DatabaseManager {
             playerBilibiliDao = DaoManager.createDao(connection, PlayerBilibili::class.java)
             videoInteractionRecordDao = DaoManager.createDao(connection, VideoInteractionRecord::class.java)
 
-            console().sendInfo("DAO初始化完成")
+            console().sendInfo("databaseDaoInitialized")
 
         } catch (e: SQLException) {
-            console().sendInfo("DAO初始化失败: ${e.message}")
+            console().sendInfo("databaseDaoInitFailed", e.message ?: "unknown")
             throw e
         }
     }
@@ -207,7 +207,7 @@ object DatabaseManager {
      */
     fun close() {
         try {
-            console().sendInfo("正在关闭数据库连接...")
+            console().sendInfo("databaseClosing")
 
             connectionSource?.close()
             dataSource?.close()
@@ -215,10 +215,10 @@ object DatabaseManager {
             connectionSource = null
             dataSource = null
 
-            console().sendInfo("数据库连接已关闭")
+            console().sendInfo("databaseClosed")
 
         } catch (e: Exception) {
-            console().sendInfo("关闭数据库连接时出错: ${e.message}")
+            console().sendInfo("databaseCloseError", e.message ?: "unknown")
         }
     }
 }

@@ -28,15 +28,15 @@ object SimpleTransactionManager {
         crossinline operation: () -> T
     ): TransactionResult<T> {
         return try {
-            console().sendInfo("开始数据库事务")
+            console().sendInfo("transactionStarted")
             
             val result = operation()
             
-            console().sendInfo("事务执行成功")
+            console().sendInfo("transactionSuccess")
             TransactionResult.Success(result)
             
         } catch (e: Exception) {
-            console().sendInfo("事务执行失败: ${e.message}")
+            console().sendInfo("transactionFailed", e.message ?: "unknown")
             
             // 记录错误
             ErrorHandler.handleError(
@@ -59,15 +59,15 @@ object SimpleTransactionManager {
         crossinline operation: () -> List<T>
     ): TransactionResult<List<T>> {
         return try {
-            console().sendInfo("开始批量数据库操作，批次大小: $batchSize")
+            console().sendInfo("batchOperationStarted", batchSize.toString())
             
             val result = operation()
             
-            console().sendInfo("批量操作完成，处理记录数: ${result.size}")
+            console().sendInfo("batchOperationCompleted", result.size.toString())
             TransactionResult.Success(result)
             
         } catch (e: Exception) {
-            console().sendInfo("批量操作失败: ${e.message}")
+            console().sendInfo("batchOperationFailed", e.message ?: "unknown")
             
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
