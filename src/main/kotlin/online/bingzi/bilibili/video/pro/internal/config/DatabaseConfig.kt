@@ -17,50 +17,50 @@ object DatabaseConfig {
         private set
     
     // 数据库类型
-    val databaseType: String = config.getString("database.type", "sqlite")!!
+    val databaseType: String by lazy { config.getString("database.type", "sqlite")!! }
     
     // SQLite 配置
-    val sqliteFile: String = config.getString("database.sqlite.file", "bilibili_data.db")!!
+    val sqliteFile: String by lazy { config.getString("database.sqlite.file", "bilibili_data.db")!! }
     
-    val sqliteMaxPoolSize: Int = config.getInt("database.sqlite.pool.maximum_pool_size", 10)
+    val sqliteMaxPoolSize: Int by lazy { config.getInt("database.sqlite.pool.maximum_pool_size", 10) }
     
-    val sqliteMinIdle: Int = config.getInt("database.sqlite.pool.minimum_idle", 2)
+    val sqliteMinIdle: Int by lazy { config.getInt("database.sqlite.pool.minimum_idle", 2) }
     
-    val sqliteConnectionTimeout: Long = config.getLong("database.sqlite.pool.connection_timeout", 30000)
+    val sqliteConnectionTimeout: Long by lazy { config.getLong("database.sqlite.pool.connection_timeout", 30000) }
     
-    val sqliteIdleTimeout: Long = config.getLong("database.sqlite.pool.idle_timeout", 600000)
+    val sqliteIdleTimeout: Long by lazy { config.getLong("database.sqlite.pool.idle_timeout", 600000) }
     
-    val sqliteMaxLifetime: Long = config.getLong("database.sqlite.pool.max_lifetime", 1800000)
+    val sqliteMaxLifetime: Long by lazy { config.getLong("database.sqlite.pool.max_lifetime", 1800000) }
     
     // MySQL 配置
-    val mysqlHost: String = config.getString("database.mysql.host", "localhost")!!
+    val mysqlHost: String by lazy { config.getString("database.mysql.host", "localhost")!! }
     
-    val mysqlPort: Int = config.getInt("database.mysql.port", 3306)
+    val mysqlPort: Int by lazy { config.getInt("database.mysql.port", 3306) }
     
-    val mysqlDatabase: String = config.getString("database.mysql.database", "bilibili_video_pro")!!
+    val mysqlDatabase: String by lazy { config.getString("database.mysql.database", "bilibili_video_pro")!! }
     
-    val mysqlUsername: String = config.getString("database.mysql.username", "bilibili_user")!!
+    val mysqlUsername: String by lazy { config.getString("database.mysql.username", "bilibili_user")!! }
     
-    val mysqlPassword: String = config.getString("database.mysql.password", "your_password_here")!!
+    val mysqlPassword: String by lazy { config.getString("database.mysql.password", "your_password_here")!! }
     
-    val mysqlMaxPoolSize: Int = config.getInt("database.mysql.pool.maximum_pool_size", 20)
+    val mysqlMaxPoolSize: Int by lazy { config.getInt("database.mysql.pool.maximum_pool_size", 20) }
     
-    val mysqlMinIdle: Int = config.getInt("database.mysql.pool.minimum_idle", 5)
+    val mysqlMinIdle: Int by lazy { config.getInt("database.mysql.pool.minimum_idle", 5) }
     
-    val mysqlConnectionTimeout: Long = config.getLong("database.mysql.pool.connection_timeout", 30000)
+    val mysqlConnectionTimeout: Long by lazy { config.getLong("database.mysql.pool.connection_timeout", 30000) }
     
-    val mysqlIdleTimeout: Long = config.getLong("database.mysql.pool.idle_timeout", 600000)
+    val mysqlIdleTimeout: Long by lazy { config.getLong("database.mysql.pool.idle_timeout", 600000) }
     
-    val mysqlMaxLifetime: Long = config.getLong("database.mysql.pool.max_lifetime", 1800000)
+    val mysqlMaxLifetime: Long by lazy { config.getLong("database.mysql.pool.max_lifetime", 1800000) }
     
-    val mysqlLeakDetectionThreshold: Long = config.getLong("database.mysql.pool.leak_detection_threshold", 60000)
+    val mysqlLeakDetectionThreshold: Long by lazy { config.getLong("database.mysql.pool.leak_detection_threshold", 60000) }
     
     // 通用配置
-    val tablePrefix: String = config.getString("table_prefix", "bvp_")!!
+    val tablePrefix: String by lazy { config.getString("table_prefix", "bvp_")!! }
     
-    val autoCreateTables: Boolean = config.getBoolean("auto_create_tables", true)
+    val autoCreateTables: Boolean by lazy { config.getBoolean("auto_create_tables", true) }
     
-    val enableSqlLogging: Boolean = config.getBoolean("enable_sql_logging", false)
+    val enableSqlLogging: Boolean by lazy { config.getBoolean("enable_sql_logging", false) }
     
     /**
      * 获取数据库类型枚举
