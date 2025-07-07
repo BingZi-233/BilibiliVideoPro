@@ -78,7 +78,7 @@ object CacheCleanupManager {
                     playerCooldownsRemoved,
                     playerCooldownsRemoved * 64L  // 估算内存释放
                 )
-                EventBus.callEvent(cleanupEvent)
+                cleanupEvent.call()
                 memoryFreed += cleanupEvent.memoryFreed
             }
 
@@ -99,7 +99,7 @@ object CacheCleanupManager {
                     videoCooldownsRemoved,
                     videoCooldownsRemoved * 128L  // 估算内存释放
                 )
-                EventBus.callEvent(cleanupEvent)
+                cleanupEvent.call()
                 memoryFreed += cleanupEvent.memoryFreed
             }
 
@@ -120,7 +120,7 @@ object CacheCleanupManager {
                     loginSessionsRemoved,
                     loginSessionsRemoved * 256L  // 估算内存释放
                 )
-                EventBus.callEvent(cleanupEvent)
+                cleanupEvent.call()
                 memoryFreed += cleanupEvent.memoryFreed
             }
 
