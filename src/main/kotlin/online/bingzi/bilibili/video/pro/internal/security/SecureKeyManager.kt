@@ -1,6 +1,7 @@
 package online.bingzi.bilibili.video.pro.internal.security
 
 import taboolib.common.platform.function.console
+import taboolib.common.platform.function.getDataFolder
 import taboolib.module.lang.sendInfo
 import java.io.File
 import java.nio.file.Files
@@ -23,10 +24,11 @@ object SecureKeyManager {
     /**
      * 初始化密钥管理器
      */
-    fun initialize(pluginDataFolder: File): Boolean {
+    fun initialize(): Boolean {
         return try {
             console().sendInfo("securityKeyManagerInitializing")
 
+            val pluginDataFolder = getDataFolder()
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
 
             encryptionKey = if (keyFile.exists()) {
@@ -159,10 +161,11 @@ object SecureKeyManager {
      * 重新生成密钥
      * 警告：这将使所有现有的加密数据无法解密
      */
-    fun regenerateKey(pluginDataFolder: File): Boolean {
+    fun regenerateKey(): Boolean {
         return try {
             console().sendInfo("securityKeyRegenerating")
 
+            val pluginDataFolder = getDataFolder()
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
             val newKey = CookieEncryption.generateKey()
 

@@ -31,7 +31,7 @@ object PluginManager {
 
         try {
             // 初始化安全密钥管理器
-            if (SecureKeyManager.initialize(getDataFolder())) {
+            if (SecureKeyManager.initialize()) {
                 console().sendLang("pluginSecurityInitialized")
 
                 // 初始化数据库
