@@ -27,6 +27,7 @@ import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
+import taboolib.module.lang.asLangText
 import taboolib.platform.util.asLangText
 import taboolib.platform.util.sendLang
 
@@ -731,9 +732,9 @@ object BilibiliVideoProCommand {
             val statusEvent = PlayerStatusQueryEvent(
                 player,
                 binding.bilibiliUsername,
-                binding.bilibiliUid,
-                stats.totalVideos,
-                stats.tripleCompletedVideos
+                binding.bilibiliUid.toString(),
+                stats.totalVideos.toInt(),
+                stats.tripleCompletedVideos.toInt()
             )
             statusEvent.call()
 

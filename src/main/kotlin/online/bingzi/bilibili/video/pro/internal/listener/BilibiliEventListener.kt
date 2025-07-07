@@ -5,10 +5,10 @@ import online.bingzi.bilibili.video.pro.api.event.*
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
+import taboolib.module.lang.asLangText
 import taboolib.module.lang.sendError
 import taboolib.module.lang.sendInfo
 import taboolib.module.lang.sendWarn
-import taboolib.platform.util.asLangText
 import taboolib.platform.util.sendLang
 
 /**
@@ -38,7 +38,7 @@ object BilibiliEventListener {
         } else {
             console().sendWarn("eventPlayerLoginFailed", event.player.name, event.errorMessage ?: "")
             submit(async = false) {
-                event.player.sendLang("loginFailed", event.errorMessage ?: console().asLangText("loginUnknownError"))
+                event.player.sendLang("loginFailed", event.errorMessage ?: console().asLangText("loginUnknownError", listOf<String>()))
             }
         }
     }
