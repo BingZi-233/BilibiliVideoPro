@@ -1,5 +1,18 @@
 package online.bingzi.bilibili.video.pro.internal.command
 
+import online.bingzi.bilibili.video.pro.api.event.ErrorHandlingEvent
+import online.bingzi.bilibili.video.pro.api.entity.event.ErrorType
+import online.bingzi.bilibili.video.pro.api.event.GuiActionEvent
+import online.bingzi.bilibili.video.pro.api.event.GuiActionType
+import online.bingzi.bilibili.video.pro.api.entity.event.GuiType
+import online.bingzi.bilibili.video.pro.api.event.PlayerLoginCompleteEvent
+import online.bingzi.bilibili.video.pro.api.event.PlayerLoginStartEvent
+import online.bingzi.bilibili.video.pro.api.event.PlayerStatusQueryEvent
+import online.bingzi.bilibili.video.pro.api.event.RewardGrantEvent
+import online.bingzi.bilibili.video.pro.api.entity.event.RewardType
+import online.bingzi.bilibili.video.pro.api.event.SystemStatusQueryEvent
+import online.bingzi.bilibili.video.pro.api.event.TripleActionCheckEvent
+import online.bingzi.bilibili.video.pro.api.event.TripleActionCompleteEvent
 import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
 import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteractionService
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
@@ -9,7 +22,7 @@ import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
 import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
-import online.bingzi.bilibili.video.pro.internal.network.auth.QRCodeLoginService
+import online.bingzi.bilibili.video.pro.internal.event.*
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.*
@@ -20,9 +33,8 @@ import taboolib.common.platform.function.submit
 import taboolib.common.platform.ProxyPlayer
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
-import taboolib.module.lang.sendLang
 import taboolib.platform.util.sendLang
-import java.util.concurrent.ConcurrentHashMap
+import taboolib.common.platform.event.EventBus
 
 /**
  * BilibiliVideoPro 主命令处理器
@@ -65,7 +77,13 @@ object BilibiliVideoProCommand {
     val login = subCommand {
         execute<Player> { player, _, _ ->
             submit(async = true) {
-                startLogin(player)
+                // 发布登录开始事件
+                val loginStartEvent = PlayerLoginStartEvent(player, "")
+                EventBus.callEvent(loginStartEvent)
+                
+                if (!loginStartEvent.isCancelled) {
+                    startLogin(player)
+                }
             }
         }
     }
@@ -79,7 +97,13 @@ object BilibiliVideoProCommand {
             execute<Player> { player, _, argument ->
                 val bvid = argument
                 submit(async = true) {
-                    checkTripleAction(player, bvid)
+                    // 发布三联检查开始事件
+                    val tripleCheckEvent = TripleActionCheckEvent(player, bvid, false, false, false)
+                    EventBus.callEvent(tripleCheckEvent)
+                    
+                    if (!tripleCheckEvent.isCancelled) {
+                        checkTripleAction(player, bvid)
+                    }
                 }
             }
         }
@@ -92,7 +116,13 @@ object BilibiliVideoProCommand {
     val status = subCommand {
         execute<Player> { player, _, _ ->
             submit(async = true) {
-                showPlayerStatus(player)
+                // 发布状态查询事件
+                val statusEvent = PlayerStatusQueryEvent(player, null, null, 0, 0)
+                EventBus.callEvent(statusEvent)
+                
+                if (!statusEvent.isCancelled) {
+                    showPlayerStatus(player)
+                }
             }
         }
     }
@@ -138,7 +168,13 @@ object BilibiliVideoProCommand {
     val gui = subCommand {
         execute<Player> { player, _, _ ->
             submit(async = false) {
-                online.bingzi.bilibili.video.pro.internal.gui.GuiManager.showMainMenu(player)
+                // 发布GUI操作事件
+                val guiEvent = GuiActionEvent(player, GuiType.MAIN_MENU, GuiActionType.OPEN)
+                EventBus.callEvent(guiEvent)
+                
+                if (!guiEvent.isCancelled) {
+                    online.bingzi.bilibili.video.pro.internal.gui.GuiManager.showMainMenu(player)
+                }
             }
         }
     }
@@ -182,24 +218,30 @@ object BilibiliVideoProCommand {
                 }
                 
                 submit(async = true) {
-                    val healthStatus = SystemMonitor.getHealthStatus()
-                    val performanceStats = SystemMonitor.getPerformanceStats()
+                    // 发布系统状态查询事件
+                    val systemStatusEvent = SystemStatusQueryEvent(sender, emptyMap(), emptyMap())
+                    EventBus.callEvent(systemStatusEvent)
                     
-                    submit(async = false) {
-                        sender.sendMessage("§6=== BilibiliVideoPro 系统状态 ===")
-                        sender.sendMessage("§a总体状态: §f${healthStatus.overall.name}")
-                        sender.sendMessage("§a数据库: §f${healthStatus.database.name}")
-                        sender.sendMessage("§a安全系统: §f${healthStatus.security.name}")
-                        sender.sendMessage("§a网络: §f${healthStatus.network.name}")
-                        sender.sendMessage("§a内存: §f${healthStatus.memory.name}")
-                        sender.sendMessage("§a运行时间: §f${performanceStats.uptime / 1000}秒")
-                        sender.sendMessage("§a内存使用: §f${String.format("%.2f", performanceStats.memoryUsage.usagePercentage)}%")
+                    if (!systemStatusEvent.isCancelled) {
+                        val healthStatus = SystemMonitor.getHealthStatus()
+                        val performanceStats = SystemMonitor.getPerformanceStats()
                         
-                        if (performanceStats.requestCounts.isNotEmpty()) {
-                            sender.sendMessage("§a请求统计:")
-                            performanceStats.requestCounts.forEach { (operation, count) ->
-                                val avgTime = performanceStats.averageExecutionTimes[operation] ?: 0.0
-                                sender.sendMessage("  §7$operation: §f$count 次, 平均: ${String.format("%.2f", avgTime)}ms")
+                        submit(async = false) {
+                            sender.sendMessage("§6=== BilibiliVideoPro 系统状态 ===")
+                            sender.sendMessage("§a总体状态: §f${healthStatus.overall.name}")
+                            sender.sendMessage("§a数据库: §f${healthStatus.database.name}")
+                            sender.sendMessage("§a安全系统: §f${healthStatus.security.name}")
+                            sender.sendMessage("§a网络: §f${healthStatus.network.name}")
+                            sender.sendMessage("§a内存: §f${healthStatus.memory.name}")
+                            sender.sendMessage("§a运行时间: §f${performanceStats.uptime / 1000}秒")
+                            sender.sendMessage("§a内存使用: §f${String.format("%.2f", performanceStats.memoryUsage.usagePercentage)}%")
+                            
+                            if (performanceStats.requestCounts.isNotEmpty()) {
+                                sender.sendMessage("§a请求统计:")
+                                performanceStats.requestCounts.forEach { (operation, count) ->
+                                    val avgTime = performanceStats.averageExecutionTimes[operation] ?: 0.0
+                                    sender.sendMessage("  §7$operation: §f$count 次, 平均: ${String.format("%.2f", avgTime)}ms")
+                                }
                             }
                         }
                     }
@@ -301,6 +343,10 @@ object BilibiliVideoProCommand {
                 is QRCodeResult.Success -> {
                     val qrData = qrResult.data
                     
+                    // 发布登录开始事件（更新qrcode key）
+                    val loginStartEvent = PlayerLoginStartEvent(player, qrData.qrcodeKey)
+                    EventBus.callEvent(loginStartEvent)
+                    
                     // 创建并给予QR码地图物品
                     val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, "登录二维码")
                     submit(async = false) {
@@ -312,6 +358,15 @@ object BilibiliVideoProCommand {
                     startLoginPolling(player, qrData.qrcodeKey)
                 }
                 is QRCodeResult.Error -> {
+                    // 发布错误事件
+                    val errorEvent = ErrorHandlingEvent(
+                        player, ErrorType.AUTHENTICATION_ERROR,
+                        RuntimeException(qrResult.message),
+                        qrResult.message,
+                        "QR码生成失败"
+                    )
+                    EventBus.callEvent(errorEvent)
+                    
                     submit(async = false) {
                         player.sendLang("loginQRCodeFailed", qrResult.message)
                     }
@@ -319,6 +374,15 @@ object BilibiliVideoProCommand {
             }
             
         } catch (e: Exception) {
+            // 发布错误事件
+            val errorEvent = ErrorHandlingEvent(
+                player, ErrorType.SYSTEM_ERROR,
+                e,
+                e.message ?: "Unknown error",
+                "登录流程"
+            )
+            EventBus.callEvent(errorEvent)
+            
             submit(async = false) {
                 player.sendLang("loginError", e.message ?: "Unknown error")
             }
@@ -365,6 +429,15 @@ object BilibiliVideoProCommand {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
                         
+                        // 发布登录完成事件
+                        val loginCompleteEvent = PlayerLoginCompleteEvent(
+                            player,
+                            "登录成功",
+                            "未知",
+                            true
+                        )
+                        EventBus.callEvent(loginCompleteEvent)
+                        
                         // 暂时简化处理，只显示成功消息
                         submit(async = false) {
                             player.sendLang("loginSuccess", "登录成功")
@@ -384,6 +457,16 @@ object BilibiliVideoProCommand {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
                         
+                        // 发布登录完成事件（失败）
+                        val loginCompleteEvent = PlayerLoginCompleteEvent(
+                            player,
+                            "",
+                            "",
+                            false,
+                            "登录二维码已过期"
+                        )
+                        EventBus.callEvent(loginCompleteEvent)
+                        
                         submit(async = false) {
                             player.sendLang("loginExpired")
                         }
@@ -391,6 +474,15 @@ object BilibiliVideoProCommand {
                     is LoginPollResult.Error -> {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
+                        
+                        // 发布错误事件
+                        val errorEvent = ErrorHandlingEvent(
+                            player, ErrorType.AUTHENTICATION_ERROR,
+                            RuntimeException(statusResult.message),
+                            statusResult.message,
+                            "登录状态轮询"
+                        )
+                        EventBus.callEvent(errorEvent)
                         
                         submit(async = false) {
                             player.sendLang("loginError", statusResult.message)
@@ -455,6 +547,12 @@ object BilibiliVideoProCommand {
                 is TripleActionResult.Success -> {
                     val status = tripleResult.status
                     
+                    // 发布三联检查结果事件
+                    val tripleCheckEvent = TripleActionCheckEvent(
+                        player, bvid, status.isLiked, status.isCoined, status.isFavorited
+                    )
+                    EventBus.callEvent(tripleCheckEvent)
+                    
                     // 记录交互数据
                     VideoInteractionService.recordInteraction(
                         playerUuid = player.uniqueId.toString(),
@@ -467,6 +565,10 @@ object BilibiliVideoProCommand {
                     
                     // 检查是否完成一键三联
                     if (status.isLiked && status.isCoined && status.isFavorited) {
+                        // 发布三联完成事件
+                        val tripleCompleteEvent = TripleActionCompleteEvent(player, bvid, bvid)
+                        EventBus.callEvent(tripleCompleteEvent)
+                        
                         submit(async = false) {
                             player.sendLang("tripleActionCompleted", bvid)
                         }
@@ -487,6 +589,15 @@ object BilibiliVideoProCommand {
                     }
                 }
                 is TripleActionResult.Error -> {
+                    // 发布错误事件
+                    val errorEvent = ErrorHandlingEvent(
+                        player, ErrorType.NETWORK_ERROR,
+                        RuntimeException(tripleResult.message),
+                        tripleResult.message,
+                        "一键三联检查"
+                    )
+                    EventBus.callEvent(errorEvent)
+                    
                     submit(async = false) {
                         player.sendLang("checkTripleActionFailed", tripleResult.message)
                     }
@@ -494,6 +605,15 @@ object BilibiliVideoProCommand {
             }
             
         } catch (e: Exception) {
+            // 发布错误事件
+            val errorEvent = ErrorHandlingEvent(
+                player, ErrorType.SYSTEM_ERROR,
+                e,
+                e.message ?: "Unknown error",
+                "一键三联检查"
+            )
+            EventManager.publishEvent(errorEvent)
+            
             submit(async = false) {
                 player.sendLang("checkTripleActionError", e.message ?: "Unknown error")
             }
@@ -568,11 +688,26 @@ object BilibiliVideoProCommand {
         
         if (script.isNullOrBlank()) return
         
+        // 发布奖励发放事件
+        val rewardEvent = RewardGrantEvent(
+            player, bvid, RewardType.SCRIPT, 0, script
+        )
+        EventBus.callEvent(rewardEvent)
+        
         submit(async = false) {
             try {
                 // 使用KetherHelper执行脚本
                 script.ketherEval(player as ProxyPlayer)
             } catch (e: Exception) {
+                // 发布脚本错误事件
+                val errorEvent = ErrorHandlingEvent(
+                    player, ErrorType.SCRIPT_ERROR,
+                    e,
+                    e.message ?: "Unknown error",
+                    "奖励脚本执行"
+                )
+                EventBus.callEvent(errorEvent)
+                
                 player.sendLang("scriptExecutionError", e.message ?: "Unknown error")
             }
         }
@@ -594,6 +729,16 @@ object BilibiliVideoProCommand {
             // 获取交互记录统计
             val stats = VideoInteractionService.getPlayerStatistics(player.uniqueId.toString())
             
+            // 发布状态查询事件
+            val statusEvent = PlayerStatusQueryEvent(
+                player,
+                binding.bilibiliUsername,
+                binding.bilibiliUid,
+                stats.totalVideos,
+                stats.tripleCompletedVideos
+            )
+            EventBus.callEvent(statusEvent)
+            
             submit(async = false) {
                 player.sendLang("statusTitle")
                 player.sendLang("statusBoundAccount", binding.bilibiliUsername, binding.bilibiliUid)
@@ -604,6 +749,15 @@ object BilibiliVideoProCommand {
             }
             
         } catch (e: Exception) {
+            // 发布错误事件
+            val errorEvent = ErrorHandlingEvent(
+                player, ErrorType.DATABASE_ERROR,
+                e,
+                e.message ?: "Unknown error",
+                "状态查询"
+            )
+            EventManager.publishEvent(errorEvent)
+            
             submit(async = false) {
                 player.sendLang("statusError", e.message ?: "Unknown error")
             }

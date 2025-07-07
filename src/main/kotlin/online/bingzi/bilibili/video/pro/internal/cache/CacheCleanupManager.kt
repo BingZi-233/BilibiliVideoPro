@@ -1,12 +1,14 @@
 package online.bingzi.bilibili.video.pro.internal.cache
 
+import online.bingzi.bilibili.video.pro.api.event.CacheCleanupEvent
+import online.bingzi.bilibili.video.pro.api.entity.event.CacheCleanupType
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
+import taboolib.common.platform.event.EventBus
 import taboolib.module.lang.sendInfo
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 
 /**
  * 缓存清理管理器
@@ -54,15 +56,27 @@ object CacheCleanupManager {
         try {
             val now = System.currentTimeMillis()
             var totalCleaned = 0
+            var memoryFreed = 0L
             
             // 清理过期的玩家冷却时间
             val expiredPlayerCooldowns = playerCooldownCache.filter { (_, expireTime) ->
                 now > expireTime
             }.keys
             
+            val playerCooldownsRemoved = expiredPlayerCooldowns.size
             expiredPlayerCooldowns.forEach { playerUuid ->
                 playerCooldownCache.remove(playerUuid)
                 totalCleaned++
+            }
+            
+            if (playerCooldownsRemoved > 0) {
+                val cleanupEvent = CacheCleanupEvent(
+                    CacheCleanupType.PLAYER_COOLDOWN,
+                    playerCooldownsRemoved,
+                    playerCooldownsRemoved * 64L  // 估算内存释放
+                )
+                EventBus.callEvent(cleanupEvent)
+                memoryFreed += cleanupEvent.memoryFreed
             }
             
             // 清理过期的视频冷却时间
@@ -70,9 +84,20 @@ object CacheCleanupManager {
                 now > expireTime
             }.keys
             
+            val videoCooldownsRemoved = expiredVideoCooldowns.size
             expiredVideoCooldowns.forEach { videoKey ->
                 videoCooldownCache.remove(videoKey)
                 totalCleaned++
+            }
+            
+            if (videoCooldownsRemoved > 0) {
+                val cleanupEvent = CacheCleanupEvent(
+                    CacheCleanupType.VIDEO_COOLDOWN,
+                    videoCooldownsRemoved,
+                    videoCooldownsRemoved * 128L  // 估算内存释放
+                )
+                EventBus.callEvent(cleanupEvent)
+                memoryFreed += cleanupEvent.memoryFreed
             }
             
             // 清理过期的登录会话
@@ -80,13 +105,32 @@ object CacheCleanupManager {
                 sessionInfo.isExpired()
             }.keys
             
+            val loginSessionsRemoved = expiredLoginSessions.size
             expiredLoginSessions.forEach { playerUuid ->
                 loginSessionCache.remove(playerUuid)
                 totalCleaned++
             }
             
+            if (loginSessionsRemoved > 0) {
+                val cleanupEvent = CacheCleanupEvent(
+                    CacheCleanupType.LOGIN_SESSION,
+                    loginSessionsRemoved,
+                    loginSessionsRemoved * 256L  // 估算内存释放
+                )
+                EventBus.callEvent(cleanupEvent)
+                memoryFreed += cleanupEvent.memoryFreed
+            }
+            
             if (totalCleaned > 0) {
                 console().sendInfo("cacheCleanupCompleted", totalCleaned.toString())
+                
+                // 发布总清理事件
+                val totalCleanupEvent = CacheCleanupEvent(
+                    CacheCleanupType.ALL,
+                    totalCleaned,
+                    memoryFreed
+                )
+                EventManager.publishEvent(totalCleanupEvent)
             }
             
             // 记录缓存统计信息
