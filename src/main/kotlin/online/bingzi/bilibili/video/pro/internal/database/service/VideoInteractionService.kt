@@ -1,8 +1,8 @@
 package online.bingzi.bilibili.video.pro.internal.database.service
 
 import com.j256.ormlite.dao.Dao
-import online.bingzi.bilibili.video.pro.internal.entity.database.service.PlayerStatistics
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
+import online.bingzi.bilibili.video.pro.internal.entity.database.service.PlayerStatistics
 
 /**
  * Video interaction service impl
@@ -12,7 +12,7 @@ import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractio
  */
 object VideoInteractionService {
 
-    
+
     lateinit var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>
 
     fun recordInteraction(playerUuid: String, bvid: String, videoTitle: String, isLiked: Boolean, isCoined: Boolean, isFavorited: Boolean): VideoInteractionRecord {

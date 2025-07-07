@@ -1,5 +1,9 @@
 package online.bingzi.bilibili.video.pro.internal.gui.menu
 
+import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
+import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteractionService
+import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
+import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -9,24 +13,19 @@ import taboolib.platform.util.sendLang
 import xyz.xenondevs.invui.gui.Gui
 import xyz.xenondevs.invui.gui.PagedGui
 import xyz.xenondevs.invui.item.ItemProvider
-import xyz.xenondevs.invui.item.builder.ItemBuilder as InvUIItemBuilder
 import xyz.xenondevs.invui.item.impl.AbstractItem
-import xyz.xenondevs.invui.item.impl.controlitem.PageItem
 import xyz.xenondevs.invui.window.Window
-import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
-import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteractionService
-import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
-import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
 import java.text.SimpleDateFormat
+import xyz.xenondevs.invui.item.builder.ItemBuilder as InvUIItemBuilder
 
 /**
  * 管理员GUI
  * 提供管理员专用功能
  */
 object AdminGui {
-    
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-    
+
     /**
      * 显示管理员主界面
      */
@@ -35,7 +34,7 @@ object AdminGui {
             player.sendLang("noPermission")
             return
         }
-        
+
         val gui = Gui.normal()
             .setStructure(
                 "# # # # # # # # #",
@@ -54,23 +53,23 @@ object AdminGui {
             .addIngredient('g', ReloadItem(player))
             .addIngredient('h', BackButtonItem(player))
             .build()
-        
+
         val window = Window.single()
             .setViewer(player)
             .setTitle("§c§lBilibiliVideoPro §f- 管理员面板")
             .setGui(gui)
             .build()
-        
+
         window.open()
     }
-    
+
     /**
      * 显示玩家管理界面
      */
     fun showPlayerManagement(player: Player) {
         submit(async = true) {
             val allBindings = PlayerBilibiliService.findAll()
-            
+
             submit(async = false) {
                 val gui = PagedGui.items()
                     .setStructure(
@@ -85,29 +84,31 @@ object AdminGui {
                         override fun getItemProvider(): ItemProvider {
                             return InvUIItemBuilder(Material.ARROW).setDisplayName("§7上一页")
                         }
+
                         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
                     })
                     .addIngredient('>', object : AbstractItem() {
                         override fun getItemProvider(): ItemProvider {
                             return InvUIItemBuilder(Material.ARROW).setDisplayName("§7下一页")
                         }
+
                         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
                     })
                     .addIngredient('b', BackToAdminItem(player))
                     .setContent(allBindings.map { PlayerManagementItemEntry(player, it) })
                     .build()
-                
+
                 val window = Window.single()
                     .setViewer(player)
                     .setTitle("§c§l管理员面板 §f- 玩家管理")
                     .setGui(gui)
                     .build()
-                
+
                 window.open()
             }
         }
     }
-    
+
     /**
      * 边框装饰物品
      */
@@ -116,12 +117,12 @@ object AdminGui {
             return InvUIItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
                 .setDisplayName("§f ")
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 玩家管理项目
      */
@@ -136,12 +137,12 @@ object AdminGui {
                     "§e点击进入玩家管理"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             showPlayerManagement(player)
         }
     }
-    
+
     /**
      * 系统统计项目
      */
@@ -156,16 +157,16 @@ object AdminGui {
                     "§e点击查看统计"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             showSystemStats(player)
         }
-        
+
         private fun showSystemStats(player: Player) {
             submit(async = true) {
                 val totalPlayers = PlayerBilibiliService.getTotalPlayerCount()
                 val totalInteractions = VideoInteractionService.getTotalInteractionCount()
-                
+
                 submit(async = false) {
                     val gui = Gui.normal()
                         .setStructure(
@@ -182,19 +183,19 @@ object AdminGui {
                         .addIngredient('d', DatabaseStatusItem())
                         .addIngredient('e', BackToAdminItem(player))
                         .build()
-                    
+
                     val window = Window.single()
                         .setViewer(player)
                         .setTitle("§c§l管理员面板 §f- 系统统计")
                         .setGui(gui)
                         .build()
-                    
+
                     window.open()
                 }
             }
         }
     }
-    
+
     /**
      * 配置管理项目
      */
@@ -209,13 +210,13 @@ object AdminGui {
                     "§e点击管理配置"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
             player.performCommand("bvp reload")
         }
     }
-    
+
     /**
      * 数据库管理项目
      */
@@ -230,13 +231,13 @@ object AdminGui {
                     "§e点击管理数据库"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // TODO: 实现数据库管理界面
             player.sendMessage("§7数据库管理功能开发中...")
         }
     }
-    
+
     /**
      * 日志查看项目
      */
@@ -251,13 +252,13 @@ object AdminGui {
                     "§e点击查看日志"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // TODO: 实现日志查看界面
             player.sendMessage("§7日志查看功能开发中...")
         }
     }
-    
+
     /**
      * 备份项目
      */
@@ -272,13 +273,13 @@ object AdminGui {
                     "§e点击管理备份"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // TODO: 实现备份管理界面
             player.sendMessage("§7备份管理功能开发中...")
         }
     }
-    
+
     /**
      * 重载项目
      */
@@ -293,13 +294,13 @@ object AdminGui {
                     "§e点击重载"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
             player.performCommand("bvp reload")
         }
     }
-    
+
     /**
      * 玩家管理条目
      */
@@ -322,30 +323,32 @@ object AdminGui {
                     "§c右键: 解绑账户"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             when (clickType) {
                 ClickType.LEFT -> {
                     showPlayerDetails(admin, binding)
                 }
+
                 ClickType.RIGHT -> {
                     confirmUnbind(admin, binding)
                 }
+
                 else -> {}
             }
         }
-        
+
         private fun showPlayerDetails(admin: Player, binding: online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili) {
             // TODO: 实现玩家详情界面
             admin.sendMessage("§7玩家详情功能开发中...")
         }
-        
+
         private fun confirmUnbind(admin: Player, binding: online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili) {
             admin.closeInventory()
             admin.performCommand("bvp unbind ${binding.playerName}")
         }
     }
-    
+
     /**
      * 总玩家数项目
      */
@@ -359,12 +362,12 @@ object AdminGui {
                     "§7今日新增: §f?"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 总互动数项目
      */
@@ -378,12 +381,12 @@ object AdminGui {
                     "§7平均互动: §f?"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 系统状态项目
      */
@@ -398,12 +401,12 @@ object AdminGui {
                     "§7内存使用: §f${Runtime.getRuntime().let { (it.totalMemory() - it.freeMemory()) / 1024 / 1024 }}MB"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 数据库状态项目
      */
@@ -417,12 +420,12 @@ object AdminGui {
                     "§7表数量: §f2"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 返回管理员面板按钮
      */
@@ -436,12 +439,12 @@ object AdminGui {
                     "§e点击返回"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             show(player)
         }
     }
-    
+
     /**
      * 返回主菜单按钮
      */
@@ -455,7 +458,7 @@ object AdminGui {
                     "§e点击返回"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             GuiManager.showMainMenu(player)
         }

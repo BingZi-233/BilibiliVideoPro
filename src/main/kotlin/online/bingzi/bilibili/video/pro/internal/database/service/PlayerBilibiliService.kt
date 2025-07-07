@@ -5,12 +5,8 @@ import online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili
 import online.bingzi.bilibili.video.pro.internal.database.transaction.SimpleTransactionManager
 import online.bingzi.bilibili.video.pro.internal.error.ErrorHandler
 import online.bingzi.bilibili.video.pro.internal.validation.InputValidator
-import taboolib.common.LifeCycle
-import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
-
-import taboolib.common.platform.service.PlatformExecutor
 
 /**
  * Player bilibili service impl
@@ -20,7 +16,7 @@ import taboolib.common.platform.service.PlatformExecutor
  */
 object PlayerBilibiliService {
 
-    
+
     lateinit var playerBilibiliDao: Dao<PlayerBilibili, Long>
 
     /**
@@ -34,7 +30,7 @@ object PlayerBilibiliService {
                 console().sendInfo("uuidValidationFailed", validation.errorMessage ?: "unknown")
                 return null
             }
-            
+
             playerBilibiliDao.queryForEq("player_uuid", uuid).firstOrNull()
         } catch (e: Exception) {
             ErrorHandler.handleError(
@@ -59,7 +55,7 @@ object PlayerBilibiliService {
                 console().sendInfo("bilibiliUidValidationFailed", validation.errorMessage ?: "unknown")
                 return null
             }
-            
+
             playerBilibiliDao.queryForEq("bilibili_uid", userId).firstOrNull()
         } catch (e: Exception) {
             ErrorHandler.handleError(
@@ -77,13 +73,13 @@ object PlayerBilibiliService {
      * 创建绑定记录（使用事务）
      */
     fun createBinding(
-        playerUuid: String, 
-        playerName: String, 
-        bilibiliUserId: Long, 
-        bilibiliUsername: String, 
-        sessdata: String, 
-        biliJct: String, 
-        dedeUserId: String, 
+        playerUuid: String,
+        playerName: String,
+        bilibiliUserId: Long,
+        bilibiliUsername: String,
+        sessdata: String,
+        biliJct: String,
+        dedeUserId: String,
         dedeUserIdMd5: String
     ): PlayerBilibili? {
         return SimpleTransactionManager.executeTransaction {
@@ -98,22 +94,22 @@ object PlayerBilibiliService {
                 { InputValidator.validateCookie("DedeUserID", dedeUserId) },
                 { InputValidator.validateCookie("DedeUserID__ckMd5", dedeUserIdMd5) }
             )
-            
+
             if (!validationResult.isValid) {
                 throw IllegalArgumentException("输入验证失败: ${validationResult.errorMessage}")
             }
-            
+
             // 检查是否已经存在绑定
             val existingByUuid = findByPlayerUuid(playerUuid)
             if (existingByUuid != null) {
                 throw IllegalStateException("玩家已绑定Bilibili账户")
             }
-            
+
             val existingByUid = findByBilibiliUserId(bilibiliUserId)
             if (existingByUid != null) {
                 throw IllegalStateException("该Bilibili账户已被其他玩家绑定")
             }
-            
+
             // 创建新绑定
             val playerBilibili = PlayerBilibili(
                 playerUuid,
@@ -125,10 +121,10 @@ object PlayerBilibiliService {
                 dedeUserId,
                 dedeUserIdMd5
             )
-            
+
             playerBilibiliDao.create(playerBilibili)
             console().sendInfo("playerBindingCreated", playerName, bilibiliUsername)
-            
+
             playerBilibili
         }.let { result ->
             when (result) {

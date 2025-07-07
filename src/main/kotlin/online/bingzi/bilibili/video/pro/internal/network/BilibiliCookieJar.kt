@@ -14,10 +14,10 @@ import kotlin.concurrent.write
  * 线程安全实现
  */
 class BilibiliCookieJar : CookieJar {
-    
+
     private val cookieStore = ConcurrentHashMap<String, Cookie>()
     private val lock = ReentrantReadWriteLock()
-    
+
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         lock.write {
             cookies.forEach { cookie ->
@@ -28,12 +28,12 @@ class BilibiliCookieJar : CookieJar {
             }
         }
     }
-    
+
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
         return lock.read {
             val validCookies = mutableListOf<Cookie>()
             val expiredKeys = mutableListOf<String>()
-            
+
             // 收集有效和过期的cookie
             cookieStore.forEach { (key, cookie) ->
                 if (cookie.expiresAt < System.currentTimeMillis()) {
@@ -42,7 +42,7 @@ class BilibiliCookieJar : CookieJar {
                     validCookies.add(cookie)
                 }
             }
-            
+
             // 如果有过期的cookie，使用写锁移除它们
             if (expiredKeys.isNotEmpty()) {
                 lock.write {
@@ -51,11 +51,11 @@ class BilibiliCookieJar : CookieJar {
                     }
                 }
             }
-            
+
             validCookies
         }
     }
-    
+
     /**
      * 手动设置Cookie
      */
@@ -74,7 +74,7 @@ class BilibiliCookieJar : CookieJar {
             }
         }
     }
-    
+
     /**
      * 获取所有Cookie作为Map
      */
@@ -83,7 +83,7 @@ class BilibiliCookieJar : CookieJar {
             cookieStore.mapValues { it.value.value }
         }
     }
-    
+
     /**
      * 获取特定Cookie
      */
@@ -92,7 +92,7 @@ class BilibiliCookieJar : CookieJar {
             cookieStore[name]?.value
         }
     }
-    
+
     /**
      * 清除所有Cookie
      */
@@ -101,7 +101,7 @@ class BilibiliCookieJar : CookieJar {
             cookieStore.clear()
         }
     }
-    
+
     /**
      * 移除特定Cookie
      */
@@ -110,7 +110,7 @@ class BilibiliCookieJar : CookieJar {
             cookieStore.remove(name)
         }
     }
-    
+
     /**
      * 检查是否包含特定Cookie
      */
@@ -120,14 +120,14 @@ class BilibiliCookieJar : CookieJar {
             cookie != null && !isExpired(cookie)
         }
     }
-    
+
     /**
      * 检查Cookie是否过期
      */
     private fun isExpired(cookie: Cookie): Boolean {
         return cookie.expiresAt < System.currentTimeMillis()
     }
-    
+
     /**
      * 获取Cookie字符串形式（用于手动设置请求头）
      */
@@ -138,7 +138,7 @@ class BilibiliCookieJar : CookieJar {
                 .joinToString("; ") { "${it.name}=${it.value}" }
         }
     }
-    
+
     /**
      * 清理过期的Cookie
      */
@@ -150,7 +150,7 @@ class BilibiliCookieJar : CookieJar {
             }
         }
     }
-    
+
     /**
      * 获取Cookie统计信息
      */
@@ -159,7 +159,7 @@ class BilibiliCookieJar : CookieJar {
             val totalCookies = cookieStore.size
             val expiredCookies = cookieStore.values.count { isExpired(it) }
             val validCookies = totalCookies - expiredCookies
-            
+
             mapOf(
                 "total" to totalCookies,
                 "valid" to validCookies,

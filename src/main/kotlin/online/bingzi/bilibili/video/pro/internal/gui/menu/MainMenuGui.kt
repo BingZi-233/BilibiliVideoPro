@@ -1,25 +1,23 @@
 package online.bingzi.bilibili.video.pro.internal.gui.menu
 
+import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
+import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
-import taboolib.platform.util.ItemBuilder
-import taboolib.platform.util.sendLang
 import xyz.xenondevs.invui.gui.Gui
 import xyz.xenondevs.invui.item.ItemProvider
-import xyz.xenondevs.invui.item.builder.ItemBuilder as InvUIItemBuilder
 import xyz.xenondevs.invui.item.impl.AbstractItem
 import xyz.xenondevs.invui.window.Window
-import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
-import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
+import xyz.xenondevs.invui.item.builder.ItemBuilder as InvUIItemBuilder
 
 /**
  * 主菜单GUI
  * 提供插件的主要功能入口
  */
 object MainMenuGui {
-    
+
     /**
      * 显示主菜单
      */
@@ -42,16 +40,16 @@ object MainMenuGui {
             .addIngredient('g', ReloadItem(player))
             .addIngredient('h', CloseItem())
             .build()
-        
+
         val window = Window.single()
             .setViewer(player)
             .setTitle("§6§lBilibiliVideoPro §f- 主菜单")
             .setGui(gui)
             .build()
-        
+
         window.open()
     }
-    
+
     /**
      * 边框装饰物品
      */
@@ -60,12 +58,12 @@ object MainMenuGui {
             return InvUIItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
                 .setDisplayName("§f ")
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }
     }
-    
+
     /**
      * 登录按钮
      */
@@ -92,7 +90,7 @@ object MainMenuGui {
                     )
             }
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
             val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
@@ -103,7 +101,7 @@ object MainMenuGui {
             }
         }
     }
-    
+
     /**
      * 视频列表按钮
      */
@@ -118,12 +116,12 @@ object MainMenuGui {
                     "§e点击打开视频列表"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             GuiManager.showVideoList(player)
         }
     }
-    
+
     /**
      * 统计信息按钮
      */
@@ -138,12 +136,12 @@ object MainMenuGui {
                     "§e点击查看统计"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             GuiManager.showPlayerStats(player)
         }
     }
-    
+
     /**
      * 管理员按钮
      */
@@ -158,12 +156,12 @@ object MainMenuGui {
                     "§e点击打开管理面板"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             GuiManager.showAdminGui(player)
         }
     }
-    
+
     /**
      * 状态按钮
      */
@@ -178,13 +176,13 @@ object MainMenuGui {
                     "§e点击查看状态"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
             player.performCommand("bvp info")
         }
     }
-    
+
     /**
      * 帮助按钮
      */
@@ -199,13 +197,13 @@ object MainMenuGui {
                     "§e点击查看帮助"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
             player.performCommand("bvp")
         }
     }
-    
+
     /**
      * 重载按钮
      */
@@ -229,7 +227,7 @@ object MainMenuGui {
                     )
             }
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             if (player.hasPermission("bilibilipro.admin")) {
                 player.closeInventory()
@@ -237,7 +235,7 @@ object MainMenuGui {
             }
         }
     }
-    
+
     /**
      * 关闭按钮
      */
@@ -251,12 +249,12 @@ object MainMenuGui {
                     "§e点击关闭"
                 )
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             player.closeInventory()
         }
     }
-    
+
     /**
      * 空物品
      */
@@ -264,7 +262,7 @@ object MainMenuGui {
         override fun getItemProvider(): ItemProvider {
             return InvUIItemBuilder(Material.AIR)
         }
-        
+
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
             // 不做任何处理
         }

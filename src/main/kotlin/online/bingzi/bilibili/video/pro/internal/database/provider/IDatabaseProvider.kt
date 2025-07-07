@@ -1,8 +1,6 @@
-
 package online.bingzi.bilibili.video.pro.internal.database.provider
 
 import com.zaxxer.hikari.HikariDataSource
-import online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig
 
 /**
  * Database provider

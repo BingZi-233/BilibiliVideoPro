@@ -1,4 +1,3 @@
-
 package online.bingzi.bilibili.video.pro.internal.helper
 
 import com.comphenix.protocol.PacketType
@@ -86,7 +85,7 @@ object NMSHelper {
 
         // 4. 写入图标 (Optional<List<MapIcon>>)
         // 在现代版本中，如果列表为空，应写入Optional.empty()，而不是null。
-        
+
 
         // 5. 写入数据更新区域 (如果数据为空则不写入)
         if (data.isNotEmpty()) {

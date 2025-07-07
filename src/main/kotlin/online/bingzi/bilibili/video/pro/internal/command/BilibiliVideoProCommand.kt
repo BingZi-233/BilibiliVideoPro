@@ -1,40 +1,34 @@
 package online.bingzi.bilibili.video.pro.internal.command
 
-import online.bingzi.bilibili.video.pro.api.event.ErrorHandlingEvent
 import online.bingzi.bilibili.video.pro.api.entity.event.ErrorType
-import online.bingzi.bilibili.video.pro.api.event.GuiActionEvent
-import online.bingzi.bilibili.video.pro.api.event.GuiActionType
 import online.bingzi.bilibili.video.pro.api.entity.event.GuiType
-import online.bingzi.bilibili.video.pro.api.event.PlayerLoginCompleteEvent
-import online.bingzi.bilibili.video.pro.api.event.PlayerLoginStartEvent
-import online.bingzi.bilibili.video.pro.api.event.PlayerStatusQueryEvent
-import online.bingzi.bilibili.video.pro.api.event.RewardGrantEvent
 import online.bingzi.bilibili.video.pro.api.entity.event.RewardType
-import online.bingzi.bilibili.video.pro.api.event.SystemStatusQueryEvent
-import online.bingzi.bilibili.video.pro.api.event.TripleActionCheckEvent
-import online.bingzi.bilibili.video.pro.api.event.TripleActionCompleteEvent
+import online.bingzi.bilibili.video.pro.api.event.*
+import online.bingzi.bilibili.video.pro.internal.cache.CacheCleanupManager
 import online.bingzi.bilibili.video.pro.internal.database.service.PlayerBilibiliService
 import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteractionService
-import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginPollResult
+import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionResult
-import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
+import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
 import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
+import online.bingzi.bilibili.video.pro.internal.monitor.SystemMonitor
 import online.bingzi.bilibili.video.pro.internal.network.BilibiliNetworkManager
-import online.bingzi.bilibili.video.pro.internal.event.*
+import online.bingzi.bilibili.video.pro.internal.validation.InputValidator
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import taboolib.common.platform.command.*
-import online.bingzi.bilibili.video.pro.internal.validation.InputValidator
-import online.bingzi.bilibili.video.pro.internal.monitor.SystemMonitor
-import online.bingzi.bilibili.video.pro.internal.cache.CacheCleanupManager
-import taboolib.common.platform.function.submit
 import taboolib.common.platform.ProxyPlayer
+import taboolib.common.platform.command.CommandBody
+import taboolib.common.platform.command.CommandHeader
+import taboolib.common.platform.command.mainCommand
+import taboolib.common.platform.command.subCommand
+import taboolib.common.platform.function.console
+import taboolib.common.platform.function.submit
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
+import taboolib.platform.util.asLangText
 import taboolib.platform.util.sendLang
-import taboolib.common.platform.event.EventBus
 
 /**
  * BilibiliVideoPro 主命令处理器
@@ -42,12 +36,10 @@ import taboolib.common.platform.event.EventBus
  */
 @CommandHeader(name = "bilibilipro", aliases = ["bvp", "bilibili"], permission = "bilibilipro.use")
 object BilibiliVideoProCommand {
-    
+
     @Config("config.yml")
     lateinit var config: Configuration
-    
-    // 移除旧的内存泄漏风险的缓存，改用CacheCleanupManager
-    
+
     /**
      * 主命令 - 显示帮助信息
      */
@@ -69,7 +61,7 @@ object BilibiliVideoProCommand {
             }
         }
     }
-    
+
     /**
      * 登录命令 - 开始QR码登录流程
      */
@@ -79,15 +71,15 @@ object BilibiliVideoProCommand {
             submit(async = true) {
                 // 发布登录开始事件
                 val loginStartEvent = PlayerLoginStartEvent(player, "")
-                EventBus.callEvent(loginStartEvent)
-                
+                loginStartEvent.call()
+
                 if (!loginStartEvent.isCancelled) {
                     startLogin(player)
                 }
             }
         }
     }
-    
+
     /**
      * 检查命令 - 检查指定BV号是否完成一键三联
      */
@@ -99,8 +91,8 @@ object BilibiliVideoProCommand {
                 submit(async = true) {
                     // 发布三联检查开始事件
                     val tripleCheckEvent = TripleActionCheckEvent(player, bvid, false, false, false)
-                    EventBus.callEvent(tripleCheckEvent)
-                    
+                    tripleCheckEvent.call()
+
                     if (!tripleCheckEvent.isCancelled) {
                         checkTripleAction(player, bvid)
                     }
@@ -108,7 +100,7 @@ object BilibiliVideoProCommand {
             }
         }
     }
-    
+
     /**
      * 状态命令 - 查看玩家绑定状态
      */
@@ -118,15 +110,15 @@ object BilibiliVideoProCommand {
             submit(async = true) {
                 // 发布状态查询事件
                 val statusEvent = PlayerStatusQueryEvent(player, null, null, 0, 0)
-                EventBus.callEvent(statusEvent)
-                
+                statusEvent.call()
+
                 if (!statusEvent.isCancelled) {
                     showPlayerStatus(player)
                 }
             }
         }
     }
-    
+
     /**
      * 解绑命令 - 管理员解绑玩家账户
      */
@@ -138,7 +130,7 @@ object BilibiliVideoProCommand {
                     sender.sendLang("noPermission")
                     return@execute
                 }
-                
+
                 val targetPlayer = argument
                 submit(async = true) {
                     unbindPlayer(sender, targetPlayer)
@@ -146,7 +138,7 @@ object BilibiliVideoProCommand {
             }
         }
     }
-    
+
     /**
      * 插件信息命令
      */
@@ -157,10 +149,10 @@ object BilibiliVideoProCommand {
             sender.sendLang("infoVersion")
             sender.sendLang("infoAuthor")
             sender.sendLang("infoDescription")
-            sender.sendLang("infoInitialized", if (PluginManager.isInitialized()) "是" else "否")
+            sender.sendLang("infoInitialized", if (PluginManager.isInitialized()) sender.asLangText("infoYes") else sender.asLangText("infoNo"))
         }
     }
-    
+
     /**
      * GUI命令 - 打开主菜单GUI
      */
@@ -170,15 +162,15 @@ object BilibiliVideoProCommand {
             submit(async = false) {
                 // 发布GUI操作事件
                 val guiEvent = GuiActionEvent(player, GuiType.MAIN_MENU, GuiActionType.OPEN)
-                EventBus.callEvent(guiEvent)
-                
+                guiEvent.call()
+
                 if (!guiEvent.isCancelled) {
                     online.bingzi.bilibili.video.pro.internal.gui.GuiManager.showMainMenu(player)
                 }
             }
         }
     }
-    
+
     /**
      * GUI主题命令
      */
@@ -190,21 +182,21 @@ object BilibiliVideoProCommand {
                     sender.sendLang("noPermission")
                     return@execute
                 }
-                
+
                 val themeName = argument
                 submit(async = true) {
                     switchGuiTheme(sender, themeName)
                 }
             }
         }
-        
+
         execute<CommandSender> { sender, _, _ ->
             submit(async = false) {
                 sender.sendMessage(online.bingzi.bilibili.video.pro.internal.gui.GuiManager.getCurrentThemeInfo())
             }
         }
     }
-    
+
     /**
      * 系统状态命令 - 管理员查看系统状态
      */
@@ -216,31 +208,31 @@ object BilibiliVideoProCommand {
                     sender.sendLang("noPermission")
                     return@execute
                 }
-                
+
                 submit(async = true) {
                     // 发布系统状态查询事件
                     val systemStatusEvent = SystemStatusQueryEvent(sender, emptyMap(), emptyMap())
-                    EventBus.callEvent(systemStatusEvent)
-                    
+                    systemStatusEvent.call()
+
                     if (!systemStatusEvent.isCancelled) {
                         val healthStatus = SystemMonitor.getHealthStatus()
                         val performanceStats = SystemMonitor.getPerformanceStats()
-                        
+
                         submit(async = false) {
-                            sender.sendMessage("§6=== BilibiliVideoPro 系统状态 ===")
-                            sender.sendMessage("§a总体状态: §f${healthStatus.overall.name}")
-                            sender.sendMessage("§a数据库: §f${healthStatus.database.name}")
-                            sender.sendMessage("§a安全系统: §f${healthStatus.security.name}")
-                            sender.sendMessage("§a网络: §f${healthStatus.network.name}")
-                            sender.sendMessage("§a内存: §f${healthStatus.memory.name}")
-                            sender.sendMessage("§a运行时间: §f${performanceStats.uptime / 1000}秒")
-                            sender.sendMessage("§a内存使用: §f${String.format("%.2f", performanceStats.memoryUsage.usagePercentage)}%")
-                            
+                            sender.sendLang("systemStatusTitle")
+                            sender.sendLang("systemStatusOverall", healthStatus.overall.name)
+                            sender.sendLang("systemStatusDatabase", healthStatus.database.name)
+                            sender.sendLang("systemStatusSecurity", healthStatus.security.name)
+                            sender.sendLang("systemStatusNetwork", healthStatus.network.name)
+                            sender.sendLang("systemStatusMemory", healthStatus.memory.name)
+                            sender.sendLang("systemStatusUptime", (performanceStats.uptime / 1000).toString())
+                            sender.sendLang("systemStatusMemoryUsage", String.format("%.2f", performanceStats.memoryUsage.usagePercentage))
+
                             if (performanceStats.requestCounts.isNotEmpty()) {
-                                sender.sendMessage("§a请求统计:")
+                                sender.sendLang("systemStatusRequestStats")
                                 performanceStats.requestCounts.forEach { (operation, count) ->
                                     val avgTime = performanceStats.averageExecutionTimes[operation] ?: 0.0
-                                    sender.sendMessage("  §7$operation: §f$count 次, 平均: ${String.format("%.2f", avgTime)}ms")
+                                    sender.sendLang("systemStatusRequestDetail", operation, count.toString(), String.format("%.2f", avgTime))
                                 }
                             }
                         }
@@ -249,7 +241,7 @@ object BilibiliVideoProCommand {
             }
         }
     }
-    
+
     /**
      * 系统报告命令 - 生成详细报告
      */
@@ -260,10 +252,10 @@ object BilibiliVideoProCommand {
                 sender.sendLang("noPermission")
                 return@execute
             }
-            
+
             submit(async = true) {
                 val report = SystemMonitor.generateSystemReport()
-                
+
                 submit(async = false) {
                     report.lines().forEach { line ->
                         sender.sendMessage(line)
@@ -272,7 +264,7 @@ object BilibiliVideoProCommand {
             }
         }
     }
-    
+
     /**
      * 清理统计命令
      */
@@ -284,29 +276,29 @@ object BilibiliVideoProCommand {
                     sender.sendLang("noPermission")
                     return@execute
                 }
-                
+
                 submit(async = true) {
                     SystemMonitor.clearStatistics()
                     online.bingzi.bilibili.video.pro.internal.error.ErrorHandler.clearErrorStatistics()
-                    
+
                     submit(async = false) {
-                        sender.sendMessage("§a系统统计数据已清理")
+                        sender.sendLang("cleanStatsSuccess")
                     }
                 }
             }
         }
     }
-    
+
     /**
      * 切换GUI主题
      */
     private fun switchGuiTheme(sender: CommandSender, themeName: String) {
         // 实现主题切换逻辑
         submit(async = false) {
-            sender.sendMessage("§7主题切换功能开发中...")
+            sender.sendLang("themeSwitchInDevelopment")
         }
     }
-    
+
     /**
      * 开始登录流程
      */
@@ -320,7 +312,7 @@ object BilibiliVideoProCommand {
                 }
                 return
             }
-            
+
             // 检查是否已经在登录中
             val existingSession = CacheCleanupManager.getLoginSession(player.uniqueId.toString())
             if (existingSession != null) {
@@ -330,65 +322,66 @@ object BilibiliVideoProCommand {
                     player.sendLang("loginCancelled")
                 }
             }
-            
+
             val networkManager = BilibiliNetworkManager.getInstance()
-            
+
             submit(async = false) {
                 player.sendLang("loginStarting")
             }
-            
+
             // 生成QR码
             val qrResult = networkManager.qrCodeLogin.generateQRCode()
             when (qrResult) {
                 is QRCodeResult.Success -> {
                     val qrData = qrResult.data
-                    
+
                     // 发布登录开始事件（更新qrcode key）
                     val loginStartEvent = PlayerLoginStartEvent(player, qrData.qrcodeKey)
-                    EventBus.callEvent(loginStartEvent)
-                    
+                    loginStartEvent.call()
+
                     // 创建并给予QR码地图物品
-                    val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, "登录二维码")
+                    val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, console().asLangText("loginQRCodeTitle"))
                     submit(async = false) {
                         player.inventory.addItem(mapItem)
                         player.sendLang("loginQRCodeGenerated")
                     }
-                    
+
                     // 开始轮询登录状态
                     startLoginPolling(player, qrData.qrcodeKey)
                 }
+
                 is QRCodeResult.Error -> {
                     // 发布错误事件
                     val errorEvent = ErrorHandlingEvent(
                         player, ErrorType.AUTHENTICATION_ERROR,
                         RuntimeException(qrResult.message),
                         qrResult.message,
-                        "QR码生成失败"
+                        console().asLangText("loginQRCodeContext")
                     )
-                    EventBus.callEvent(errorEvent)
-                    
+                    errorEvent.call()
+
                     submit(async = false) {
                         player.sendLang("loginQRCodeFailed", qrResult.message)
                     }
                 }
             }
-            
+
         } catch (e: Exception) {
             // 发布错误事件
             val errorEvent = ErrorHandlingEvent(
                 player, ErrorType.SYSTEM_ERROR,
                 e,
                 e.message ?: "Unknown error",
-                "登录流程"
+                console().asLangText("loginFlowContext")
             )
-            EventBus.callEvent(errorEvent)
-            
+            errorEvent.call()
+
             submit(async = false) {
                 player.sendLang("loginError", e.message ?: "Unknown error")
             }
         }
     }
-    
+
     /**
      * 开始轮询登录状态
      */
@@ -397,52 +390,53 @@ object BilibiliVideoProCommand {
         val checkInterval = config.getLong("login.check_interval", 2000)
         val maxAttempts = config.getInt("login.max_check_attempts", 90)
         val playerUuid = player.uniqueId.toString()
-        
+
         // 注册登录会话
         CacheCleanupManager.setLoginSession(playerUuid, qrcodeKey)
-        
+
         var attempts = 0
-        
+
         fun checkLoginStatus() {
             submit(async = true) {
                 attempts++
-                
+
                 // 检查是否已经超时
                 if (attempts > maxAttempts) {
                     // 清理会话
                     CacheCleanupManager.removeLoginSession(playerUuid)
-                    
+
                     submit(async = false) {
                         player.sendLang("loginTimeout")
                     }
                     return@submit
                 }
-                
+
                 // 检查会话是否仍然存在（可能被取消）
                 if (!CacheCleanupManager.hasLoginSession(playerUuid)) {
                     return@submit
                 }
-                
+
                 val statusResult = networkManager.qrCodeLogin.pollLoginStatus(qrcodeKey)
                 when (statusResult) {
                     is LoginPollResult.Success -> {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
-                        
+
                         // 发布登录完成事件
                         val loginCompleteEvent = PlayerLoginCompleteEvent(
                             player,
-                            "登录成功",
-                            "未知",
+                            console().asLangText("loginSuccessMessage"),
+                            console().asLangText("loginSuccessUser"),
                             true
                         )
-                        EventBus.callEvent(loginCompleteEvent)
-                        
+                        loginCompleteEvent.call()
+
                         // 暂时简化处理，只显示成功消息
                         submit(async = false) {
-                            player.sendLang("loginSuccess", "登录成功")
+                            player.sendLang("loginSuccess", console().asLangText("loginSuccessMessage"))
                         }
                     }
+
                     is LoginPollResult.WaitingScan,
                     is LoginPollResult.WaitingConfirm -> {
                         // 检查会话是否仍然存在（可能被取消）
@@ -453,37 +447,39 @@ object BilibiliVideoProCommand {
                             }
                         }
                     }
+
                     is LoginPollResult.Expired -> {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
-                        
+
                         // 发布登录完成事件（失败）
                         val loginCompleteEvent = PlayerLoginCompleteEvent(
                             player,
                             "",
                             "",
                             false,
-                            "登录二维码已过期"
+                            console().asLangText("loginExpiredContext")
                         )
-                        EventBus.callEvent(loginCompleteEvent)
-                        
+                        loginCompleteEvent.call()
+
                         submit(async = false) {
                             player.sendLang("loginExpired")
                         }
                     }
+
                     is LoginPollResult.Error -> {
                         // 清理会话
                         CacheCleanupManager.removeLoginSession(playerUuid)
-                        
+
                         // 发布错误事件
                         val errorEvent = ErrorHandlingEvent(
                             player, ErrorType.AUTHENTICATION_ERROR,
                             RuntimeException(statusResult.message),
                             statusResult.message,
-                            "登录状态轮询"
+                            console().asLangText("loginPollingContext")
                         )
-                        EventBus.callEvent(errorEvent)
-                        
+                        errorEvent.call()
+
                         submit(async = false) {
                             player.sendLang("loginError", statusResult.message)
                         }
@@ -491,13 +487,13 @@ object BilibiliVideoProCommand {
                 }
             }
         }
-        
+
         // 开始第一次检查
         submit(async = false, delay = checkInterval) {
             checkLoginStatus()
         }
     }
-    
+
     /**
      * 检查一键三联状态
      */
@@ -511,15 +507,15 @@ object BilibiliVideoProCommand {
                 }
                 return
             }
-            
+
             val uuidValidation = InputValidator.validatePlayerUuid(player.uniqueId.toString())
             if (!uuidValidation.isValid) {
                 submit(async = false) {
-                    player.sendLang("systemError", "玩家UUID验证失败")
+                    player.sendLang("systemError", console().asLangText("playerUuidValidationFailed"))
                 }
                 return
             }
-            
+
             // 检查玩家是否已绑定
             val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
             if (binding == null) {
@@ -528,31 +524,31 @@ object BilibiliVideoProCommand {
                 }
                 return
             }
-            
+
             // 检查冷却时间
             if (isOnCooldown(player, bvid)) {
                 return
             }
-            
+
             submit(async = false) {
                 player.sendLang("checkingTripleAction", bvid)
             }
-            
+
             val networkManager = BilibiliNetworkManager.getInstance()
             val videoService = networkManager.videoInteraction
-            
+
             // 检查一键三联状态
             val tripleResult = videoService.getTripleActionStatus(bvid)
             when (tripleResult) {
                 is TripleActionResult.Success -> {
                     val status = tripleResult.status
-                    
+
                     // 发布三联检查结果事件
                     val tripleCheckEvent = TripleActionCheckEvent(
                         player, bvid, status.isLiked, status.isCoined, status.isFavorited
                     )
-                    EventBus.callEvent(tripleCheckEvent)
-                    
+                    tripleCheckEvent.call()
+
                     // 记录交互数据
                     VideoInteractionService.recordInteraction(
                         playerUuid = player.uniqueId.toString(),
@@ -562,25 +558,26 @@ object BilibiliVideoProCommand {
                         isCoined = status.isCoined,
                         isFavorited = status.isFavorited
                     )
-                    
+
                     // 检查是否完成一键三联
                     if (status.isLiked && status.isCoined && status.isFavorited) {
                         // 发布三联完成事件
                         val tripleCompleteEvent = TripleActionCompleteEvent(player, bvid, bvid)
-                        EventBus.callEvent(tripleCompleteEvent)
-                        
+                        tripleCompleteEvent.call()
+
                         submit(async = false) {
                             player.sendLang("tripleActionCompleted", bvid)
                         }
-                        
+
                         // 设置冷却时间
                         setCooldown(player, bvid)
-                        
+
                         // 执行奖励脚本
                         executeRewardScript(player, bvid)
                     } else {
                         submit(async = false) {
-                            player.sendLang("tripleActionIncomplete", 
+                            player.sendLang(
+                                "tripleActionIncomplete",
                                 if (status.isLiked) "✓" else "✗",
                                 if (status.isCoined) "✓" else "✗",
                                 if (status.isFavorited) "✓" else "✗"
@@ -588,22 +585,23 @@ object BilibiliVideoProCommand {
                         }
                     }
                 }
+
                 is TripleActionResult.Error -> {
                     // 发布错误事件
                     val errorEvent = ErrorHandlingEvent(
                         player, ErrorType.NETWORK_ERROR,
                         RuntimeException(tripleResult.message),
                         tripleResult.message,
-                        "一键三联检查"
+                        console().asLangText("tripleActionCheckContext")
                     )
-                    EventBus.callEvent(errorEvent)
-                    
+                    errorEvent.call()
+
                     submit(async = false) {
                         player.sendLang("checkTripleActionFailed", tripleResult.message)
                     }
                 }
             }
-            
+
         } catch (e: Exception) {
             // 发布错误事件
             val errorEvent = ErrorHandlingEvent(
@@ -612,20 +610,20 @@ object BilibiliVideoProCommand {
                 e.message ?: "Unknown error",
                 "一键三联检查"
             )
-            EventManager.publishEvent(errorEvent)
-            
+            errorEvent.call()
+
             submit(async = false) {
                 player.sendLang("checkTripleActionError", e.message ?: "Unknown error")
             }
         }
     }
-    
+
     /**
      * 检查冷却时间
      */
     private fun isOnCooldown(player: Player, bvid: String): Boolean {
         val playerUuid = player.uniqueId.toString()
-        
+
         // 检查全局冷却
         if (CacheCleanupManager.isPlayerOnCooldown(playerUuid)) {
             val remainingTime = CacheCleanupManager.getPlayerCooldownRemaining(playerUuid)
@@ -634,7 +632,7 @@ object BilibiliVideoProCommand {
             }
             return true
         }
-        
+
         // 检查视频冷却
         if (CacheCleanupManager.isVideoOnCooldown(playerUuid, bvid)) {
             val remainingTime = CacheCleanupManager.getVideoCooldownRemaining(playerUuid, bvid)
@@ -643,10 +641,10 @@ object BilibiliVideoProCommand {
             }
             return true
         }
-        
+
         return false
     }
-    
+
     /**
      * 设置冷却时间
      */
@@ -654,11 +652,11 @@ object BilibiliVideoProCommand {
         val playerUuid = player.uniqueId.toString()
         val globalCooldown = config.getInt("triple_action_rewards.cooldown.global", 300)
         val videoCooldown = config.getInt("triple_action_rewards.cooldown.per_video", 3600)
-        
+
         CacheCleanupManager.setPlayerCooldown(playerUuid, globalCooldown)
         CacheCleanupManager.setVideoCooldown(playerUuid, bvid, videoCooldown)
     }
-    
+
     /**
      * 执行奖励脚本
      */
@@ -666,11 +664,11 @@ object BilibiliVideoProCommand {
         if (!config.getBoolean("triple_action_rewards.enabled", true)) {
             return
         }
-        
+
         // 首先检查特定BV号的配置
         val specificPath = "triple_action_rewards.specific_videos.$bvid"
         val specificEnabled = config.getBoolean("$specificPath.enabled", true)
-        
+
         val script = if (config.contains("$specificPath.reward_script")) {
             // 使用特定BV号的配置
             if (!specificEnabled) {
@@ -685,15 +683,15 @@ object BilibiliVideoProCommand {
             }
             config.getString("triple_action_rewards.default.reward_script", "")
         }
-        
+
         if (script.isNullOrBlank()) return
-        
+
         // 发布奖励发放事件
         val rewardEvent = RewardGrantEvent(
             player, bvid, RewardType.SCRIPT, 0, script
         )
-        EventBus.callEvent(rewardEvent)
-        
+        rewardEvent.call()
+
         submit(async = false) {
             try {
                 // 使用KetherHelper执行脚本
@@ -704,15 +702,15 @@ object BilibiliVideoProCommand {
                     player, ErrorType.SCRIPT_ERROR,
                     e,
                     e.message ?: "Unknown error",
-                    "奖励脚本执行"
+                    console().asLangText("tripleActionRewardContext")
                 )
-                EventBus.callEvent(errorEvent)
-                
+                errorEvent.call()
+
                 player.sendLang("scriptExecutionError", e.message ?: "Unknown error")
             }
         }
     }
-    
+
     /**
      * 显示玩家状态
      */
@@ -725,10 +723,10 @@ object BilibiliVideoProCommand {
                 }
                 return
             }
-            
+
             // 获取交互记录统计
             val stats = VideoInteractionService.getPlayerStatistics(player.uniqueId.toString())
-            
+
             // 发布状态查询事件
             val statusEvent = PlayerStatusQueryEvent(
                 player,
@@ -737,8 +735,8 @@ object BilibiliVideoProCommand {
                 stats.totalVideos,
                 stats.tripleCompletedVideos
             )
-            EventBus.callEvent(statusEvent)
-            
+            statusEvent.call()
+
             submit(async = false) {
                 player.sendLang("statusTitle")
                 player.sendLang("statusBoundAccount", binding.bilibiliUsername, binding.bilibiliUid)
@@ -747,23 +745,23 @@ object BilibiliVideoProCommand {
                 player.sendLang("statusInteractionCount", stats.totalVideos)
                 player.sendLang("statusTripleActionCount", stats.tripleCompletedVideos)
             }
-            
+
         } catch (e: Exception) {
             // 发布错误事件
             val errorEvent = ErrorHandlingEvent(
                 player, ErrorType.DATABASE_ERROR,
                 e,
                 e.message ?: "Unknown error",
-                "状态查询"
+                console().asLangText("statusQueryContext")
             )
-            EventManager.publishEvent(errorEvent)
-            
+            errorEvent.call()
+
             submit(async = false) {
                 player.sendLang("statusError", e.message ?: "Unknown error")
             }
         }
     }
-    
+
     /**
      * 解绑玩家账户
      */
@@ -773,7 +771,7 @@ object BilibiliVideoProCommand {
             submit(async = false) {
                 sender.sendLang("unbindPlayerNotFound", targetPlayerName)
             }
-            
+
         } catch (e: Exception) {
             submit(async = false) {
                 sender.sendLang("unbindError", e.message ?: "Unknown error")

@@ -5,16 +5,16 @@ import org.bukkit.entity.Player
 
 /**
  * 奖励发放事件
- * 
+ *
  * 当系统为玩家发放奖励时触发此事件。
  * 可以用于记录奖励历史、统计分析或触发额外的奖励逻辑。
- * 
+ *
  * @param player 接收奖励的玩家
  * @param bvid 相关的视频BV号
  * @param rewardType 奖励类型
  * @param rewardAmount 奖励数量，对于某些类型（如脚本）可能为0
  * @param rewardDescription 奖励描述信息
- * 
+ *
  * @author BilibiliVideoPro
  * @since 2.0.0
  */

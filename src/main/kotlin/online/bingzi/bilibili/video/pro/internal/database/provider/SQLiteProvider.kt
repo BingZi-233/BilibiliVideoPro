@@ -3,8 +3,6 @@ package online.bingzi.bilibili.video.pro.internal.database.provider
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import online.bingzi.bilibili.video.pro.internal.config.DatabaseConfig
-import taboolib.common.platform.function.getDataFolder
-import java.io.File
 
 /**
  * Sqlite provider

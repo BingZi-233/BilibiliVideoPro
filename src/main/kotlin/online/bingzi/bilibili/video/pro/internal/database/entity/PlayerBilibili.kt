@@ -177,7 +177,7 @@ data class PlayerBilibili(
         this.updatedTime = Date()
         this.lastLoginTime = Date()
     }
-    
+
     /**
      * 设置Cookie（加密存储）
      */
@@ -214,7 +214,7 @@ data class PlayerBilibili(
             throw SecurityException("无法解密Cookie数据: ${e.message}", e)
         }
     }
-    
+
     /**
      * 获取SESSDATA（解密）
      */
@@ -224,7 +224,7 @@ data class PlayerBilibili(
         } catch (e: Exception) {
             throw SecurityException("无法解密SESSDATA: ${e.message}", e)
         }
-    
+
     /**
      * 获取bili_jct（解密）
      */
@@ -234,7 +234,7 @@ data class PlayerBilibili(
         } catch (e: Exception) {
             throw SecurityException("无法解密bili_jct: ${e.message}", e)
         }
-    
+
     /**
      * 获取DedeUserID（解密）
      */
@@ -244,7 +244,7 @@ data class PlayerBilibili(
         } catch (e: Exception) {
             throw SecurityException("无法解密DedeUserID: ${e.message}", e)
         }
-    
+
     /**
      * 获取DedeUserID__ckMd5（解密）
      */

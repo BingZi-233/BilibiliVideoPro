@@ -5,27 +5,27 @@ import online.bingzi.bilibili.video.pro.internal.error.ErrorHandler
 import online.bingzi.bilibili.video.pro.internal.security.SecureKeyManager
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * 系统监控器
  * 提供性能统计、健康检查和系统监控功能
  */
 object SystemMonitor {
-    
+
     // 性能统计
     private val requestCounters = ConcurrentHashMap<String, AtomicLong>()
     private val executionTimes = ConcurrentHashMap<String, MutableList<Long>>()
     private val startTime = System.currentTimeMillis()
-    
+
     // 健康状态缓存
     private var lastHealthCheck = 0L
     private var cachedHealthStatus: HealthStatus? = null
     private val healthCheckCacheTime = 30000L // 30秒缓存
-    
+
     data class HealthStatus(
         val overall: HealthLevel,
         val database: HealthLevel,
@@ -35,11 +35,11 @@ object SystemMonitor {
         val details: Map<String, Any>,
         val timestamp: LocalDateTime = LocalDateTime.now()
     )
-    
+
     enum class HealthLevel {
         HEALTHY, WARNING, CRITICAL, UNKNOWN
     }
-    
+
     data class PerformanceStats(
         val requestCounts: Map<String, Long>,
         val averageExecutionTimes: Map<String, Double>,
@@ -47,7 +47,7 @@ object SystemMonitor {
         val memoryUsage: MemoryUsage,
         val errorStatistics: Map<String, Any>
     )
-    
+
     data class MemoryUsage(
         val used: Long,
         val free: Long,
@@ -55,7 +55,7 @@ object SystemMonitor {
         val max: Long,
         val usagePercentage: Double
     )
-    
+
     /**
      * 记录操作执行时间
      */
@@ -63,7 +63,7 @@ object SystemMonitor {
         try {
             // 增加请求计数
             requestCounters.computeIfAbsent(operation) { AtomicLong(0) }.incrementAndGet()
-            
+
             // 记录执行时间（只保留最近100次）
             executionTimes.computeIfAbsent(operation) { mutableListOf() }.let { times ->
                 synchronized(times) {
@@ -77,7 +77,7 @@ object SystemMonitor {
             console().sendInfo("systemMonitorRecordError", e.message ?: "unknown")
         }
     }
-    
+
     /**
      * 测量操作执行时间
      */
@@ -90,28 +90,28 @@ object SystemMonitor {
             recordExecution(operation, executionTime)
         }
     }
-    
+
     /**
      * 获取系统健康状态
      */
     fun getHealthStatus(forceRefresh: Boolean = false): HealthStatus {
         val now = System.currentTimeMillis()
-        
+
         // 检查缓存
         if (!forceRefresh && cachedHealthStatus != null && (now - lastHealthCheck) < healthCheckCacheTime) {
             return cachedHealthStatus!!
         }
-        
+
         return try {
             console().sendInfo("systemMonitorHealthCheck")
-            
+
             val databaseHealth = checkDatabaseHealth()
             val securityHealth = checkSecurityHealth()
             val networkHealth = checkNetworkHealth()
             val memoryHealth = checkMemoryHealth()
-            
+
             val overall = determineOverallHealth(databaseHealth, securityHealth, networkHealth, memoryHealth)
-            
+
             val details = mutableMapOf<String, Any>()
             details["database_status"] = databaseHealth.name
             details["security_status"] = securityHealth.name
@@ -119,7 +119,7 @@ object SystemMonitor {
             details["memory_status"] = memoryHealth.name
             details["uptime_seconds"] = (now - startTime) / 1000
             details["last_check_time"] = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            
+
             // 添加错误统计
             details["error_statistics"] = ErrorHandler.getErrorStatistics().map { (key, stats) ->
                 key to mapOf(
@@ -127,7 +127,7 @@ object SystemMonitor {
                     "last_occurrence" to stats.lastOccurrence.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 )
             }
-            
+
             val healthStatus = HealthStatus(
                 overall = overall,
                 database = databaseHealth,
@@ -136,14 +136,14 @@ object SystemMonitor {
                 memory = memoryHealth,
                 details = details
             )
-            
+
             // 更新缓存
             cachedHealthStatus = healthStatus
             lastHealthCheck = now
-            
+
             console().sendInfo("systemMonitorHealthComplete", overall.name)
             healthStatus
-            
+
         } catch (e: Exception) {
             console().sendInfo("systemMonitorHealthFailed", e.message ?: "unknown")
             HealthStatus(
@@ -156,7 +156,7 @@ object SystemMonitor {
             )
         }
     }
-    
+
     /**
      * 检查数据库健康状态
      */
@@ -172,7 +172,7 @@ object SystemMonitor {
             HealthLevel.CRITICAL
         }
     }
-    
+
     /**
      * 检查安全系统健康状态
      */
@@ -187,7 +187,7 @@ object SystemMonitor {
             HealthLevel.CRITICAL
         }
     }
-    
+
     /**
      * 检查网络健康状态
      */
@@ -206,7 +206,7 @@ object SystemMonitor {
             HealthLevel.UNKNOWN
         }
     }
-    
+
     /**
      * 检查内存健康状态
      */
@@ -218,7 +218,7 @@ object SystemMonitor {
             val freeMemory = runtime.freeMemory()
             val usedMemory = totalMemory - freeMemory
             val usagePercentage = (usedMemory.toDouble() / maxMemory.toDouble()) * 100
-            
+
             when {
                 usagePercentage < 70 -> HealthLevel.HEALTHY
                 usagePercentage < 85 -> HealthLevel.WARNING
@@ -228,7 +228,7 @@ object SystemMonitor {
             HealthLevel.UNKNOWN
         }
     }
-    
+
     /**
      * 确定总体健康状态
      */
@@ -241,20 +241,20 @@ object SystemMonitor {
             else -> HealthLevel.UNKNOWN
         }
     }
-    
+
     /**
      * 获取性能统计
      */
     fun getPerformanceStats(): PerformanceStats {
         return try {
             val requestCounts = requestCounters.mapValues { it.value.get() }
-            
+
             val averageExecutionTimes = executionTimes.mapValues { (_, times) ->
                 synchronized(times) {
                     if (times.isEmpty()) 0.0 else times.average()
                 }
             }
-            
+
             val runtime = Runtime.getRuntime()
             val memoryUsage = MemoryUsage(
                 used = runtime.totalMemory() - runtime.freeMemory(),
@@ -263,7 +263,7 @@ object SystemMonitor {
                 max = runtime.maxMemory(),
                 usagePercentage = ((runtime.totalMemory() - runtime.freeMemory()).toDouble() / runtime.maxMemory().toDouble()) * 100
             )
-            
+
             PerformanceStats(
                 requestCounts = requestCounts,
                 averageExecutionTimes = averageExecutionTimes,
@@ -287,7 +287,7 @@ object SystemMonitor {
             )
         }
     }
-    
+
     /**
      * 生成系统报告
      */
@@ -296,12 +296,12 @@ object SystemMonitor {
             val healthStatus = getHealthStatus()
             val performanceStats = getPerformanceStats()
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            
+
             buildString {
                 appendLine("=== BilibiliVideoPro 系统报告 ===")
                 appendLine("生成时间: ${LocalDateTime.now().format(formatter)}")
                 appendLine()
-                
+
                 appendLine("## 系统健康状态")
                 appendLine("总体状态: ${healthStatus.overall.name}")
                 appendLine("数据库: ${healthStatus.database.name}")
@@ -309,12 +309,12 @@ object SystemMonitor {
                 appendLine("网络: ${healthStatus.network.name}")
                 appendLine("内存: ${healthStatus.memory.name}")
                 appendLine()
-                
+
                 appendLine("## 性能统计")
                 appendLine("运行时间: ${performanceStats.uptime / 1000}秒")
                 appendLine("内存使用: ${String.format("%.2f", performanceStats.memoryUsage.usagePercentage)}%")
                 appendLine()
-                
+
                 if (performanceStats.requestCounts.isNotEmpty()) {
                     appendLine("请求统计:")
                     performanceStats.requestCounts.forEach { (operation, count) ->
@@ -323,7 +323,7 @@ object SystemMonitor {
                     }
                     appendLine()
                 }
-                
+
                 if (performanceStats.errorStatistics.isNotEmpty()) {
                     appendLine("错误统计:")
                     performanceStats.errorStatistics.forEach { (key, stats) ->
@@ -333,14 +333,14 @@ object SystemMonitor {
                     }
                     appendLine()
                 }
-                
+
                 appendLine("========================")
             }
         } catch (e: Exception) {
             "生成系统报告时出错: ${e.message}"
         }
     }
-    
+
     /**
      * 清理统计数据
      */

@@ -9,20 +9,20 @@ import online.bingzi.bilibili.video.pro.internal.network.video.VideoInteractionS
  * 整合所有网络服务，提供统一的访问接口
  */
 class BilibiliNetworkManager {
-    
+
     // API客户端实例
     private val apiClient = BilibiliApiClient()
-    
+
     // 各种服务实例
     val qrCodeLogin: QRCodeLoginService by lazy { QRCodeLoginService(apiClient) }
     val videoInteraction: VideoInteractionService by lazy { VideoInteractionService(apiClient) }
     val cookieRefresh: CookieRefreshService by lazy { CookieRefreshService(apiClient) }
-    
+
     /**
      * 获取API客户端
      */
     fun getApiClient(): BilibiliApiClient = apiClient
-    
+
     /**
      * 设置Cookie（用于手动设置登录状态）
      * @param cookies Cookie映射
@@ -30,7 +30,7 @@ class BilibiliNetworkManager {
     fun setCookies(cookies: Map<String, String>) {
         apiClient.setCookies(cookies)
     }
-    
+
     /**
      * 获取当前所有Cookie
      * @return Cookie映射
@@ -38,7 +38,7 @@ class BilibiliNetworkManager {
     fun getCookies(): Map<String, String> {
         return apiClient.getCookies()
     }
-    
+
     /**
      * 检查是否已登录
      * @return Boolean 是否已登录
@@ -46,7 +46,7 @@ class BilibiliNetworkManager {
     fun isLoggedIn(): Boolean {
         return apiClient.isLoggedIn()
     }
-    
+
     /**
      * 清除所有Cookie（登出）
      */
@@ -54,7 +54,7 @@ class BilibiliNetworkManager {
         apiClient.clearCookies()
         cookieRefresh.stopAutoRefresh()
     }
-    
+
     /**
      * 初始化网络管理器
      * 启动必要的后台服务
@@ -65,7 +65,7 @@ class BilibiliNetworkManager {
             cookieRefresh.startAutoRefresh()
         }
     }
-    
+
     /**
      * 销毁网络管理器
      * 停止所有后台服务
@@ -73,11 +73,11 @@ class BilibiliNetworkManager {
     fun destroy() {
         cookieRefresh.stopAutoRefresh()
     }
-    
+
     companion object {
         @JvmStatic
         private var instance: BilibiliNetworkManager? = null
-        
+
         /**
          * 获取单例实例
          */
@@ -92,7 +92,7 @@ class BilibiliNetworkManager {
             }
             return instance!!
         }
-        
+
         /**
          * 销毁单例实例
          */

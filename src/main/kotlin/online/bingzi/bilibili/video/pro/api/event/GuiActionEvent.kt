@@ -5,15 +5,15 @@ import org.bukkit.entity.Player
 
 /**
  * GUI操作事件
- * 
+ *
  * 当玩家在插件的图形界面中执行操作时触发此事件。
  * 可以用于用户行为分析、操作日志记录或触发相关的业务逻辑。
- * 
+ *
  * @param player 执行操作的玩家
  * @param guiType GUI类型
  * @param actionType 操作类型
  * @param actionData 操作相关的额外数据
- * 
+ *
  * @author BilibiliVideoPro
  * @since 2.0.0
  */

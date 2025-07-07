@@ -10,19 +10,19 @@ import java.io.File
  * 负责加载和管理分离的GUI配置文件
  */
 object GuiConfigManager {
-    
+
     @Config("gui/config.yml")
     lateinit var globalConfig: Configuration
-    
+
     @Config("gui/themes.yml")
     lateinit var themesConfig: Configuration
-    
+
     @Config("gui/effects.yml")
     lateinit var effectsConfig: Configuration
-    
+
     // GUI配置缓存
     private val guiConfigs = mutableMapOf<String, Configuration>()
-    
+
     /**
      * GUI布局配置数据类
      */
@@ -32,7 +32,7 @@ object GuiConfigManager {
         val layout: List<String>,
         val items: Map<String, GuiItem>
     )
-    
+
     /**
      * GUI物品配置数据类
      */
@@ -47,7 +47,7 @@ object GuiConfigManager {
         val customModelData: Int? = null,
         val enchanted: Boolean = false
     )
-    
+
     /**
      * 主题配置数据类
      */
@@ -63,7 +63,7 @@ object GuiConfigManager {
         val infoColor: String,
         val effectsEnabled: Map<String, Boolean>
     )
-    
+
     /**
      * 声音配置数据类
      */
@@ -74,7 +74,7 @@ object GuiConfigManager {
         val effects: Map<String, String>,
         val actions: Map<String, String>
     )
-    
+
     /**
      * 获取指定GUI的配置
      */
@@ -89,23 +89,23 @@ object GuiConfigManager {
             }
         }
     }
-    
+
     /**
      * 获取指定GUI的布局配置
      */
     fun getGuiLayout(guiName: String): GuiLayout? {
         val config = getGuiConfig(guiName) ?: return null
-        
+
         val title = config.getString("title", "")?.replace("&", "§") ?: ""
         val size = config.getInt("size", 3)
         val layout = config.getStringList("layout")
-        
+
         val items = mutableMapOf<String, GuiItem>()
         val itemsSection = config.getConfigurationSection("items")
-        
+
         itemsSection?.getKeys(false)?.forEach { key ->
             val itemSection = itemsSection.getConfigurationSection(key) ?: return@forEach
-            
+
             val type = itemSection.getString("type", "")!!
             val materialName = itemSection.getString("material", "STONE")!!
             val material = try {
@@ -113,7 +113,7 @@ object GuiConfigManager {
             } catch (e: Exception) {
                 Material.STONE
             }
-            
+
             val name = itemSection.getString("name", "")?.replace("&", "§") ?: ""
             val lore = itemSection.getStringList("lore").map { it.replace("&", "§") }
             val permission = itemSection.getString("permission")
@@ -123,7 +123,7 @@ object GuiConfigManager {
                 itemSection.getInt("custom_model_data")
             } else null
             val enchanted = itemSection.getBoolean("enchanted", false)
-            
+
             items[key] = GuiItem(
                 type = type,
                 material = material,
@@ -136,10 +136,10 @@ object GuiConfigManager {
                 enchanted = enchanted
             )
         }
-        
+
         return GuiLayout(title, size, layout, items)
     }
-    
+
     /**
      * 获取当前主题配置
      */
@@ -147,16 +147,16 @@ object GuiConfigManager {
         val themeName = globalConfig.getString("current.theme", "default")!!
         return getTheme(themeName) ?: getTheme("default")!!
     }
-    
+
     /**
      * 获取指定主题配置
      */
     fun getTheme(themeName: String): GuiTheme? {
         val themeSection = themesConfig.getConfigurationSection(themeName) ?: return null
-        
+
         val name = themeSection.getString("name", themeName)!!
         val description = themeSection.getString("description", "")!!
-        
+
         val colorsSection = themeSection.getConfigurationSection("colors") ?: return null
         val borderMaterialName = colorsSection.getString("border_material", "GRAY_STAINED_GLASS_PANE")!!
         val borderMaterial = try {
@@ -164,13 +164,13 @@ object GuiConfigManager {
         } catch (e: Exception) {
             Material.GRAY_STAINED_GLASS_PANE
         }
-        
+
         val effectsSection = themeSection.getConfigurationSection("effects")
         val effectsEnabled = mutableMapOf<String, Boolean>()
         effectsSection?.getKeys(false)?.forEach { key ->
             effectsEnabled[key] = effectsSection.getBoolean(key, false)
         }
-        
+
         return GuiTheme(
             name = name,
             description = description,
@@ -184,23 +184,23 @@ object GuiConfigManager {
             effectsEnabled = effectsEnabled
         )
     }
-    
+
     /**
      * 获取声音配置
      */
     fun getSoundConfig(): SoundConfig {
         val soundSection = effectsConfig.getConfigurationSection("sounds")!!
-        
+
         val effects = mutableMapOf<String, String>()
         soundSection.getConfigurationSection("effects")?.getKeys(false)?.forEach { key ->
             effects[key] = soundSection.getString("effects.$key", "")!!
         }
-        
+
         val actions = mutableMapOf<String, String>()
         soundSection.getConfigurationSection("actions")?.getKeys(false)?.forEach { key ->
             actions[key] = soundSection.getString("actions.$key", "")!!
         }
-        
+
         return SoundConfig(
             enabled = soundSection.getBoolean("enabled", true),
             volume = soundSection.getDouble("volume", 1.0).toFloat(),
@@ -209,7 +209,7 @@ object GuiConfigManager {
             actions = actions
         )
     }
-    
+
     /**
      * 获取所有可用主题
      */
@@ -218,7 +218,7 @@ object GuiConfigManager {
             !key.startsWith("holiday") && !key.startsWith("custom")
         }
     }
-    
+
     /**
      * 获取节日主题
      */
@@ -226,7 +226,7 @@ object GuiConfigManager {
         val holidaySection = themesConfig.getConfigurationSection("holiday")
         return holidaySection?.getKeys(false)?.toList() ?: emptyList()
     }
-    
+
     /**
      * 切换主题
      */
@@ -234,33 +234,33 @@ object GuiConfigManager {
         if (!themesConfig.contains(themeName)) {
             return false
         }
-        
+
         globalConfig.set("current.theme", themeName)
         globalConfig.saveToFile()
         return true
     }
-    
+
     /**
      * 检查动画是否启用
      */
     fun isAnimationEnabled(): Boolean {
         return effectsConfig.getBoolean("animations.enabled", true)
     }
-    
+
     /**
      * 获取动画更新间隔
      */
     fun getAnimationInterval(): Long {
         return effectsConfig.getLong("animations.update_interval", 20)
     }
-    
+
     /**
      * 获取启用的动画效果列表
      */
     fun getEnabledEffects(): List<String> {
         return effectsConfig.getStringList("animations.effects")
     }
-    
+
     /**
      * 应用主题颜色到文本
      */
@@ -274,7 +274,7 @@ object GuiConfigManager {
             .replace("{info}", theme.infoColor)
             .replace("&", "§")
     }
-    
+
     /**
      * 重载所有配置
      */
@@ -282,22 +282,22 @@ object GuiConfigManager {
         globalConfig.reload()
         themesConfig.reload()
         effectsConfig.reload()
-        
+
         // 清空GUI配置缓存，强制重新加载
         guiConfigs.clear()
     }
-    
+
     /**
      * 验证配置文件完整性
      */
     fun validateConfig(): List<String> {
         val errors = mutableListOf<String>()
-        
+
         // 检查全局配置
         if (!globalConfig.contains("current.theme")) {
             errors.add("Missing current theme configuration")
         }
-        
+
         // 检查GUI文件配置
         val requiredGuis = listOf("main_menu", "video_list", "player_stats", "admin_panel")
         for (guiName in requiredGuis) {
@@ -311,21 +311,21 @@ object GuiConfigManager {
                 }
             }
         }
-        
+
         // 检查主题配置
         val currentTheme = globalConfig.getString("current.theme", "default")!!
         if (!themesConfig.contains(currentTheme)) {
             errors.add("Current theme '$currentTheme' not found in themes configuration")
         }
-        
+
         // 检查声音配置
         if (!effectsConfig.contains("sounds.enabled")) {
             errors.add("Missing sounds configuration")
         }
-        
+
         return errors
     }
-    
+
     /**
      * 获取配置统计信息
      */

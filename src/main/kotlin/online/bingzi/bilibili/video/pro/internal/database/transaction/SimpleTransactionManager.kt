@@ -4,15 +4,13 @@ import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.error.ErrorHandler
 import taboolib.common.platform.function.console
 import taboolib.module.lang.sendInfo
-import java.sql.Connection
-import java.sql.SQLException
 
 /**
  * 简化的事务管理器
  * 提供基础的事务支持
  */
 object SimpleTransactionManager {
-    
+
     /**
      * 事务执行结果
      */
@@ -20,7 +18,7 @@ object SimpleTransactionManager {
         data class Success<T>(val result: T) : TransactionResult<T>()
         data class Failure<T>(val exception: Exception) : TransactionResult<T>()
     }
-    
+
     /**
      * 执行简单事务
      */
@@ -29,15 +27,15 @@ object SimpleTransactionManager {
     ): TransactionResult<T> {
         return try {
             console().sendInfo("transactionStarted")
-            
+
             val result = operation()
-            
+
             console().sendInfo("transactionSuccess")
             TransactionResult.Success(result)
-            
+
         } catch (e: Exception) {
             console().sendInfo("transactionFailed", e.message ?: "unknown")
-            
+
             // 记录错误
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
@@ -46,11 +44,11 @@ object SimpleTransactionManager {
                 exception = e,
                 metadata = mapOf("operation" to "database_transaction")
             )
-            
+
             TransactionResult.Failure(e)
         }
     }
-    
+
     /**
      * 批量执行操作
      */
@@ -60,18 +58,18 @@ object SimpleTransactionManager {
     ): TransactionResult<List<T>> {
         return try {
             console().sendInfo("batchOperationStarted", batchSize.toString())
-            
+
             val result = operation()
-            
+
             console().sendInfo("batchOperationCompleted", result.size.toString())
             TransactionResult.Success(result)
-            
+
         } catch (e: Exception) {
             console().sendInfo("batchOperationFailed", e.message ?: "unknown")
-            
+
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
-                component = "TransactionManager", 
+                component = "TransactionManager",
                 operation = "executeBatch",
                 exception = e,
                 metadata = mapOf(
@@ -79,11 +77,11 @@ object SimpleTransactionManager {
                     "batch_size" to batchSize
                 )
             )
-            
+
             TransactionResult.Failure(e)
         }
     }
-    
+
     /**
      * 检查数据库连接状态
      */
@@ -94,7 +92,7 @@ object SimpleTransactionManager {
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
                 component = "TransactionManager",
-                operation = "checkConnectionHealth", 
+                operation = "checkConnectionHealth",
                 exception = e
             )
             false

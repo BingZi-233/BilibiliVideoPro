@@ -13,22 +13,22 @@ import javax.crypto.SecretKey
  * 负责生成、存储和管理加密密钥
  */
 object SecureKeyManager {
-    
+
     private const val KEY_FILE_NAME = "security.key"
     private const val KEY_FILE_PERMISSIONS = "600" // 仅所有者可读写
-    
+
     private var encryptionKey: SecretKey? = null
     private val secureRandom = SecureRandom()
-    
+
     /**
      * 初始化密钥管理器
      */
     fun initialize(pluginDataFolder: File): Boolean {
         return try {
             console().sendInfo("securityKeyManagerInitializing")
-            
+
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
-            
+
             encryptionKey = if (keyFile.exists()) {
                 // 加载现有密钥
                 loadKeyFromFile(keyFile)
@@ -38,24 +38,24 @@ object SecureKeyManager {
                 saveKeyToFile(keyFile, newKey)
                 newKey
             }
-            
+
             console().sendInfo("securityKeyManagerInitialized")
             true
-            
+
         } catch (e: Exception) {
             console().sendInfo("securityKeyManagerInitFailed", e.message ?: "unknown")
             e.printStackTrace()
             false
         }
     }
-    
+
     /**
      * 获取加密密钥
      */
     fun getEncryptionKey(): SecretKey {
         return encryptionKey ?: throw IllegalStateException("密钥管理器未初始化")
     }
-    
+
     /**
      * 从文件加载密钥
      */
@@ -67,7 +67,7 @@ object SecureKeyManager {
             throw SecurityException("无法从文件加载密钥: ${e.message}", e)
         }
     }
-    
+
     /**
      * 保存密钥到文件
      */
@@ -75,10 +75,10 @@ object SecureKeyManager {
         try {
             // 确保父目录存在
             keyFile.parentFile.mkdirs()
-            
+
             val keyString = CookieEncryption.keyToString(key)
             keyFile.writeText(keyString)
-            
+
             // 使用Java NIO.2 API设置文件权限（更安全的方式）
             try {
                 if (System.getProperty("os.name").lowercase().contains("windows")) {
@@ -93,12 +93,12 @@ object SecureKeyManager {
                 // 权限设置失败时抛出异常，因为这是安全关键操作
                 throw SecurityException("无法设置安全的文件权限，密钥文件可能不安全", e)
             }
-            
+
         } catch (e: Exception) {
             throw SecurityException("无法保存密钥到文件: ${e.message}", e)
         }
     }
-    
+
     /**
      * 设置Windows文件权限
      */
@@ -106,15 +106,15 @@ object SecureKeyManager {
         try {
             val path = file.toPath()
             val acl = Files.getFileAttributeView(path, AclFileAttributeView::class.java)
-            
+
             if (acl != null) {
                 // 获取当前用户
                 val currentUser = path.fileSystem.userPrincipalLookupService
                     .lookupPrincipalByName(System.getProperty("user.name"))
-                
+
                 // 清除现有权限
                 acl.acl = emptyList()
-                
+
                 // 设置只有当前用户的完全控制权限
                 val entry = AclEntry.newBuilder()
                     .setType(AclEntryType.ALLOW)
@@ -129,7 +129,7 @@ object SecureKeyManager {
                         AclEntryPermission.DELETE
                     )
                     .build()
-                
+
                 acl.acl = listOf(entry)
                 console().sendInfo("securityKeyWindowsPermissionSet")
             }
@@ -137,7 +137,7 @@ object SecureKeyManager {
             throw SecurityException("设置Windows文件权限失败: ${e.message}", e)
         }
     }
-    
+
     /**
      * 设置Unix文件权限
      */
@@ -154,7 +154,7 @@ object SecureKeyManager {
             throw SecurityException("设置Unix文件权限失败: ${e.message}", e)
         }
     }
-    
+
     /**
      * 重新生成密钥
      * 警告：这将使所有现有的加密数据无法解密
@@ -162,22 +162,22 @@ object SecureKeyManager {
     fun regenerateKey(pluginDataFolder: File): Boolean {
         return try {
             console().sendInfo("securityKeyRegenerating")
-            
+
             val keyFile = File(pluginDataFolder, KEY_FILE_NAME)
             val newKey = CookieEncryption.generateKey()
-            
+
             saveKeyToFile(keyFile, newKey)
             encryptionKey = newKey
-            
+
             console().sendInfo("securityKeyRegenerated")
             true
-            
+
         } catch (e: Exception) {
             console().sendInfo("securityKeyRegenerateFailed", e.message ?: "unknown")
             false
         }
     }
-    
+
     /**
      * 验证密钥完整性
      */
@@ -187,14 +187,14 @@ object SecureKeyManager {
             val testData = "integrity_test_" + secureRandom.nextLong()
             val encrypted = CookieEncryption.encrypt(testData, key)
             val decrypted = CookieEncryption.decrypt(encrypted, key)
-            
+
             testData == decrypted
-            
+
         } catch (e: Exception) {
             false
         }
     }
-    
+
     /**
      * 获取密钥信息
      */
@@ -214,7 +214,7 @@ object SecureKeyManager {
             )
         }
     }
-    
+
     /**
      * 清理资源
      */

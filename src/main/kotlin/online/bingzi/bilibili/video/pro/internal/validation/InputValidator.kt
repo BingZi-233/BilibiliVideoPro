@@ -8,16 +8,16 @@ import java.util.regex.Pattern
  * 提供各种输入参数的验证功能
  */
 object InputValidator {
-    
+
     // BV号格式验证正则表达式
     private val BV_PATTERN = Pattern.compile("^BV[a-zA-Z0-9]{10}$")
-    
+
     // UUID格式验证正则表达式
     private val UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-    
+
     // 用户名格式验证（允许中文、英文、数字、下划线，长度3-20）
     private val USERNAME_PATTERN = Pattern.compile("^[\\u4e00-\\u9fa5\\w]{3,20}$")
-    
+
     /**
      * 验证结果
      */
@@ -30,7 +30,7 @@ object InputValidator {
             fun failure(message: String) = ValidationResult(false, message)
         }
     }
-    
+
     /**
      * 验证BV号格式
      */
@@ -53,7 +53,7 @@ object InputValidator {
             ValidationResult.failure("BV号验证时发生错误")
         }
     }
-    
+
     /**
      * 验证玩家UUID格式
      */
@@ -75,7 +75,7 @@ object InputValidator {
             ValidationResult.failure("UUID验证时发生错误")
         }
     }
-    
+
     /**
      * 验证用户名格式
      */
@@ -99,7 +99,7 @@ object InputValidator {
             ValidationResult.failure("用户名验证时发生错误")
         }
     }
-    
+
     /**
      * 验证Cookie值
      */
@@ -125,7 +125,7 @@ object InputValidator {
             ValidationResult.failure("Cookie验证时发生错误")
         }
     }
-    
+
     /**
      * 验证Bilibili UID
      */
@@ -148,7 +148,7 @@ object InputValidator {
             ValidationResult.failure("UID验证时发生错误")
         }
     }
-    
+
     /**
      * 验证QR码Key
      */
@@ -171,7 +171,7 @@ object InputValidator {
             ValidationResult.failure("QR码密钥验证时发生错误")
         }
     }
-    
+
     /**
      * 验证URL格式
      */
@@ -179,8 +179,9 @@ object InputValidator {
         return try {
             when {
                 url.isNullOrBlank() -> ValidationResult.failure("URL不能为空")
-                !url.startsWith("http://") && !url.startsWith("https://") -> 
+                !url.startsWith("http://") && !url.startsWith("https://") ->
                     ValidationResult.failure("URL必须以http://或https://开头")
+
                 url.length > 2000 -> ValidationResult.failure("URL长度过长")
                 else -> ValidationResult.success()
             }
@@ -195,7 +196,7 @@ object InputValidator {
             ValidationResult.failure("URL验证时发生错误")
         }
     }
-    
+
     /**
      * 批量验证多个条件
      */

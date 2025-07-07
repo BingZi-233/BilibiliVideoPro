@@ -1,12 +1,12 @@
 package online.bingzi.bilibili.video.pro.internal.gui
 
-import org.bukkit.entity.Player
-import online.bingzi.bilibili.video.pro.internal.gui.menu.MainMenuGui
-import online.bingzi.bilibili.video.pro.internal.gui.menu.VideoListGui
-import online.bingzi.bilibili.video.pro.internal.gui.menu.PlayerStatsGui
-import online.bingzi.bilibili.video.pro.internal.gui.menu.AdminGui
-import online.bingzi.bilibili.video.pro.internal.gui.config.GuiConfigManager
 import online.bingzi.bilibili.video.pro.internal.gui.builder.ConfigurableGuiBuilder
+import online.bingzi.bilibili.video.pro.internal.gui.config.GuiConfigManager
+import online.bingzi.bilibili.video.pro.internal.gui.menu.AdminGui
+import online.bingzi.bilibili.video.pro.internal.gui.menu.MainMenuGui
+import online.bingzi.bilibili.video.pro.internal.gui.menu.PlayerStatsGui
+import online.bingzi.bilibili.video.pro.internal.gui.menu.VideoListGui
+import org.bukkit.entity.Player
 import taboolib.common.platform.function.submit
 
 /**
@@ -14,7 +14,7 @@ import taboolib.common.platform.function.submit
  * 负责管理所有GUI界面的创建和显示
  */
 object GuiManager {
-    
+
     /**
      * 初始化GUI管理器
      */
@@ -28,7 +28,7 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 显示主菜单GUI (配置化)
      */
@@ -43,7 +43,7 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 显示视频列表GUI (配置化)
      */
@@ -58,7 +58,7 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 显示个人统计GUI (配置化)
      */
@@ -73,7 +73,7 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 显示管理员GUI (配置化)
      */
@@ -82,7 +82,7 @@ object GuiManager {
             player.sendMessage("§c您没有权限使用管理员功能！")
             return
         }
-        
+
         submit(async = false) {
             val window = ConfigurableGuiBuilder.buildGui("admin_panel", player)
             if (window != null) {
@@ -93,7 +93,7 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 显示自定义GUI
      */
@@ -107,13 +107,13 @@ object GuiManager {
             }
         }
     }
-    
+
     /**
      * 重载GUI配置
      */
     fun reloadGuiConfig() {
         GuiConfigManager.reload()
-        
+
         // 验证重载后的配置
         val errors = GuiConfigManager.validateConfig()
         if (errors.isEmpty()) {
@@ -123,14 +123,14 @@ object GuiManager {
             errors.forEach { println("  - $it") }
         }
     }
-    
+
     /**
      * 关闭所有GUI
      */
     fun closeAllGuis() {
         // InvUI 会自动处理GUI的关闭
     }
-    
+
     /**
      * 获取当前主题信息
      */
