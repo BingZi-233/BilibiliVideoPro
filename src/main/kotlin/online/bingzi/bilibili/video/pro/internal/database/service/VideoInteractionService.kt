@@ -1,6 +1,7 @@
 package online.bingzi.bilibili.video.pro.internal.database.service
 
 import com.j256.ormlite.dao.Dao
+import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.database.entity.VideoInteractionRecord
 import online.bingzi.bilibili.video.pro.internal.entity.database.service.PlayerStatistics
 
@@ -11,9 +12,6 @@ import online.bingzi.bilibili.video.pro.internal.entity.database.service.PlayerS
  * @constructor Create empty Video interaction service impl
  */
 object VideoInteractionService {
-
-
-    lateinit var videoInteractionRecordDao: Dao<VideoInteractionRecord, Long>
 
     fun recordInteraction(playerUuid: String, bvid: String, videoTitle: String, isLiked: Boolean, isCoined: Boolean, isFavorited: Boolean): VideoInteractionRecord {
         val record = findByPlayerUuidAndBvid(playerUuid, bvid)?.apply {
@@ -35,16 +33,16 @@ object VideoInteractionService {
             false, // isFollowingUp
             false // hasCommented
         )
-        videoInteractionRecordDao.createOrUpdate(record)
+        DatabaseManager.videoInteractionRecordDao.createOrUpdate(record)
         return record
     }
 
     fun findByPlayerUuidAndBvid(playerUuid: String, bvid: String): VideoInteractionRecord? {
-        return videoInteractionRecordDao.queryForEq("player_uuid", playerUuid).firstOrNull { it.videoBvid == bvid }
+        return DatabaseManager.videoInteractionRecordDao.queryForEq("player_uuid", playerUuid).firstOrNull { it.videoBvid == bvid }
     }
 
     fun getPlayerStatistics(playerUuid: String): PlayerStatistics {
-        val records = videoInteractionRecordDao.queryForEq("player_uuid", playerUuid)
+        val records = DatabaseManager.videoInteractionRecordDao.queryForEq("player_uuid", playerUuid)
         val totalVideos = records.size.toLong()
         val likedVideos = records.count { it.isLiked }.toLong()
         val coinedVideos = records.count { it.isCoined }.toLong()
@@ -64,7 +62,7 @@ object VideoInteractionService {
      */
     fun getTotalInteractionCount(): Int {
         return try {
-            videoInteractionRecordDao.countOf().toInt()
+            DatabaseManager.videoInteractionRecordDao.countOf().toInt()
         } catch (e: Exception) {
             0
         }

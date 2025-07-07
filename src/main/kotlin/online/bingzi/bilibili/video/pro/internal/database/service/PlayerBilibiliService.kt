@@ -1,6 +1,7 @@
 package online.bingzi.bilibili.video.pro.internal.database.service
 
 import com.j256.ormlite.dao.Dao
+import online.bingzi.bilibili.video.pro.internal.database.DatabaseManager
 import online.bingzi.bilibili.video.pro.internal.database.entity.PlayerBilibili
 import online.bingzi.bilibili.video.pro.internal.database.transaction.SimpleTransactionManager
 import online.bingzi.bilibili.video.pro.internal.error.ErrorHandler
@@ -16,9 +17,6 @@ import taboolib.module.lang.sendInfo
  */
 object PlayerBilibiliService {
 
-
-    lateinit var playerBilibiliDao: Dao<PlayerBilibili, Long>
-
     /**
      * 根据玩家UUID查找绑定记录
      */
@@ -31,7 +29,7 @@ object PlayerBilibiliService {
                 return null
             }
 
-            playerBilibiliDao.queryForEq("player_uuid", uuid).firstOrNull()
+            DatabaseManager.playerBilibiliDao.queryForEq("player_uuid", uuid).firstOrNull()
         } catch (e: Exception) {
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
@@ -56,7 +54,7 @@ object PlayerBilibiliService {
                 return null
             }
 
-            playerBilibiliDao.queryForEq("bilibili_uid", userId).firstOrNull()
+            DatabaseManager.playerBilibiliDao.queryForEq("bilibili_uid", userId).firstOrNull()
         } catch (e: Exception) {
             ErrorHandler.handleError(
                 type = ErrorHandler.ErrorType.DATABASE,
@@ -122,7 +120,7 @@ object PlayerBilibiliService {
                 dedeUserIdMd5
             )
 
-            playerBilibiliDao.create(playerBilibili)
+            DatabaseManager.playerBilibiliDao.create(playerBilibili)
             console().sendInfo("playerBindingCreated", playerName, bilibiliUsername)
 
             playerBilibili
@@ -151,12 +149,12 @@ object PlayerBilibiliService {
     fun updateCookie(uuid: String, sessdata: String, biliJct: String, dedeUserId: String, dedeUserIdMd5: String) {
         val playerBilibili = findByPlayerUuid(uuid) ?: return
         playerBilibili.updateCookies(sessdata, biliJct, dedeUserId, dedeUserIdMd5)
-        playerBilibiliDao.update(playerBilibili)
+        DatabaseManager.playerBilibiliDao.update(playerBilibili)
     }
 
     fun deleteBinding(uuid: String) {
         val playerBilibili = findByPlayerUuid(uuid) ?: return
-        playerBilibiliDao.delete(playerBilibili)
+        DatabaseManager.playerBilibiliDao.delete(playerBilibili)
     }
 
     /**
@@ -164,7 +162,7 @@ object PlayerBilibiliService {
      */
     fun findAll(): List<PlayerBilibili> {
         return try {
-            val queryBuilder = playerBilibiliDao.queryBuilder()
+            val queryBuilder = DatabaseManager.playerBilibiliDao.queryBuilder()
             queryBuilder.where().eq(PlayerBilibili.IS_ACTIVE, true)
             queryBuilder.query()
         } catch (e: Exception) {
@@ -177,7 +175,7 @@ object PlayerBilibiliService {
      */
     fun getTotalPlayerCount(): Int {
         return try {
-            val queryBuilder = playerBilibiliDao.queryBuilder()
+            val queryBuilder = DatabaseManager.playerBilibiliDao.queryBuilder()
             queryBuilder.where().eq(PlayerBilibili.IS_ACTIVE, true)
             queryBuilder.countOf().toInt()
         } catch (e: Exception) {
