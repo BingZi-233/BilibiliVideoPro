@@ -11,6 +11,7 @@ import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginPollRes
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionResult
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
+import online.bingzi.bilibili.video.pro.internal.helper.NMSHelper
 import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
 import online.bingzi.bilibili.video.pro.internal.manager.PluginManager
 import online.bingzi.bilibili.video.pro.internal.monitor.SystemMonitor
@@ -340,10 +341,10 @@ object BilibiliVideoProCommand {
                     val loginStartEvent = PlayerLoginStartEvent(player, qrData.qrcodeKey)
                     loginStartEvent.call()
 
-                    // 创建并给予QR码地图物品
+                    // 创建并发送虚拟QR码地图物品到玩家主手
                     val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, console().asLangText("loginQRCodeTitle"))
                     submit(async = false) {
-                        player.inventory.addItem(mapItem)
+                        NMSHelper.sendTemporaryVirtualMapItem(player, -1, mapItem, 600) // 10分钟后自动清除
                         player.sendLang("loginQRCodeGenerated")
                     }
 
