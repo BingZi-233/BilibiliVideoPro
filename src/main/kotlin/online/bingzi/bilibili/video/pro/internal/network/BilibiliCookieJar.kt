@@ -62,15 +62,23 @@ class BilibiliCookieJar : CookieJar {
     fun setCookies(cookies: Map<String, String>) {
         lock.write {
             cookies.forEach { (name, value) ->
-                val cookie = Cookie.Builder()
-                    .name(name)
-                    .value(value)
-                    .domain(".bilibili.com")
-                    .path("/")
-                    .httpOnly()
-                    .secure()
-                    .build()
-                cookieStore[name] = cookie
+                // 为每个重要的Bilibili域名设置Cookie
+                val domains = listOf(
+                    "api.bilibili.com",
+                    "passport.bilibili.com", 
+                    "www.bilibili.com",
+                    ".bilibili.com"  // 通配符域名
+                )
+                
+                domains.forEach { domain ->
+                    val cookie = Cookie.Builder()
+                        .name(name)
+                        .value(value)
+                        .domain(domain)
+                        .path("/")
+                        .build()
+                    cookieStore["${name}_${domain}"] = cookie
+                }
             }
         }
     }
@@ -80,7 +88,12 @@ class BilibiliCookieJar : CookieJar {
      */
     fun getCookies(): Map<String, String> {
         return lock.read {
-            cookieStore.mapValues { it.value.value }
+            val result = mutableMapOf<String, String>()
+            cookieStore.values.forEach { cookie ->
+                // 去重，优先保留最新的值
+                result[cookie.name] = cookie.value
+            }
+            result
         }
     }
 
@@ -89,7 +102,7 @@ class BilibiliCookieJar : CookieJar {
      */
     fun getCookie(name: String): String? {
         return lock.read {
-            cookieStore[name]?.value
+            cookieStore.values.find { it.name == name && !isExpired(it) }?.value
         }
     }
 
@@ -107,7 +120,12 @@ class BilibiliCookieJar : CookieJar {
      */
     fun removeCookie(name: String) {
         lock.write {
-            cookieStore.remove(name)
+            val keysToRemove = cookieStore.keys.filter { key ->
+                cookieStore[key]?.name == name
+            }
+            keysToRemove.forEach { key ->
+                cookieStore.remove(key)
+            }
         }
     }
 
@@ -116,8 +134,7 @@ class BilibiliCookieJar : CookieJar {
      */
     fun hasCookie(name: String): Boolean {
         return lock.read {
-            val cookie = cookieStore[name]
-            cookie != null && !isExpired(cookie)
+            cookieStore.values.any { it.name == name && !isExpired(it) }
         }
     }
 

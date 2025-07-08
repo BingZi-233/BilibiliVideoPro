@@ -417,7 +417,7 @@ object BilibiliVideoProCommand {
                     return@submit
                 }
 
-                val statusResult = networkManager.qrCodeLogin.pollLoginStatus(qrcodeKey)
+                val statusResult = networkManager.qrCodeLogin.pollLoginStatus(qrcodeKey, player.uniqueId.toString(), player.name)
                 when (statusResult) {
                     is LoginPollResult.Success -> {
                         // 清理会话
@@ -537,6 +537,14 @@ object BilibiliVideoProCommand {
 
             val networkManager = BilibiliNetworkManager.getInstance()
             val videoService = networkManager.videoInteraction
+
+            // 加载玩家的Cookie到ApiClient
+            if (!networkManager.loadPlayerCookies(player.uniqueId.toString())) {
+                submit(async = false) {
+                    player.sendLang("systemError", "Cookie加载失败")
+                }
+                return
+            }
 
             // 检查一键三联状态
             val tripleResult = videoService.getTripleActionStatus(bvid)

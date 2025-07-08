@@ -3,7 +3,6 @@ package online.bingzi.bilibili.video.pro.internal.gui.config
 import org.bukkit.Material
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
-import java.io.File
 
 /**
  * GUI配置管理器
@@ -20,8 +19,17 @@ object GuiConfigManager {
     @Config("gui/effects.yml")
     lateinit var effectsConfig: Configuration
 
-    // GUI配置缓存
-    private val guiConfigs = mutableMapOf<String, Configuration>()
+    @Config("gui/admin_panel.yml")
+    lateinit var adminPanelConfig: Configuration
+
+    @Config("gui/player_stats.yml")
+    lateinit var playerStatsConfig: Configuration
+
+    @Config("gui/video_list.yml")
+    lateinit var videoListConfig: Configuration
+
+    @Config("gui/main_menu.yml")
+    lateinit var mainMenuConfig: Configuration
 
     /**
      * GUI布局配置数据类
@@ -79,14 +87,12 @@ object GuiConfigManager {
      * 获取指定GUI的配置
      */
     private fun getGuiConfig(guiName: String): Configuration? {
-        return guiConfigs.getOrPut(guiName) {
-            try {
-                val fileName = globalConfig.getString("files.$guiName") ?: return null
-                Configuration.loadFromFile(File("plugins/BilibiliVideoPro/$fileName"))
-            } catch (e: Exception) {
-                println("Failed to load GUI config for $guiName: ${e.message}")
-                return null
-            }
+        return when (guiName) {
+            "admin_panel" -> adminPanelConfig
+            "player_stats" -> playerStatsConfig
+            "video_list" -> videoListConfig
+            "main_menu" -> mainMenuConfig
+            else -> null
         }
     }
 
@@ -235,7 +241,7 @@ object GuiConfigManager {
             return false
         }
 
-        globalConfig.set("current.theme", themeName)
+        globalConfig["current.theme"] = themeName
         globalConfig.saveToFile()
         return true
     }
@@ -282,9 +288,10 @@ object GuiConfigManager {
         globalConfig.reload()
         themesConfig.reload()
         effectsConfig.reload()
-
-        // 清空GUI配置缓存，强制重新加载
-        guiConfigs.clear()
+        adminPanelConfig.reload()
+        playerStatsConfig.reload()
+        videoListConfig.reload()
+        mainMenuConfig.reload()
     }
 
     /**
@@ -331,7 +338,7 @@ object GuiConfigManager {
      */
     fun getConfigStats(): Map<String, Any> {
         return mapOf(
-            "loaded_guis" to guiConfigs.keys.size,
+            "loaded_guis" to 4, // admin_panel, player_stats, video_list, main_menu
             "available_themes" to getAvailableThemes().size,
             "holiday_themes" to getHolidayThemes().size,
             "current_theme" to getCurrentTheme().name,
@@ -339,4 +346,36 @@ object GuiConfigManager {
             "sounds_enabled" to getSoundConfig().enabled
         )
     }
+
+    /**
+     * 获取所有GUI配置
+     */
+    fun getAllGuiConfigs(): Map<String, Configuration> {
+        return mapOf(
+            "admin_panel" to adminPanelConfig,
+            "player_stats" to playerStatsConfig,
+            "video_list" to videoListConfig,
+            "main_menu" to mainMenuConfig
+        )
+    }
+
+    /**
+     * 直接获取管理员面板配置
+     */
+    fun getAdminPanelLayout(): GuiLayout? = getGuiLayout("admin_panel")
+
+    /**
+     * 直接获取玩家统计配置
+     */
+    fun getPlayerStatsLayout(): GuiLayout? = getGuiLayout("player_stats")
+
+    /**
+     * 直接获取视频列表配置
+     */
+    fun getVideoListLayout(): GuiLayout? = getGuiLayout("video_list")
+
+    /**
+     * 直接获取主菜单配置
+     */
+    fun getMainMenuLayout(): GuiLayout? = getGuiLayout("main_menu")
 }
