@@ -71,6 +71,20 @@ object VideoListGui {
     private fun getConfiguredVideos(): List<VideoInfo> {
         val videos = mutableListOf<VideoInfo>()
 
+        // 检查三联奖励是否启用
+        if (!config.getBoolean("triple_action_rewards.enabled", true)) {
+            videos.add(
+                VideoInfo(
+                    bvid = "功能已禁用",
+                    title = "三联奖励功能已禁用",
+                    description = "请在配置文件中启用 triple_action_rewards.enabled",
+                    enabled = false,
+                    rewardScript = ""
+                )
+            )
+            return videos
+        }
+
         // 添加默认配置
         if (config.getBoolean("triple_action_rewards.default.enabled", true)) {
             videos.add(
@@ -86,17 +100,30 @@ object VideoListGui {
 
         // 添加特定视频配置
         val specificVideos = config.getConfigurationSection("triple_action_rewards.specific_videos")
-        specificVideos?.getKeys(false)?.forEach { bvid ->
-            val enabled = config.getBoolean("triple_action_rewards.specific_videos.$bvid.enabled", true)
-            val script = config.getString("triple_action_rewards.specific_videos.$bvid.reward_script", "")
+        if (specificVideos != null && specificVideos.getKeys(false).isNotEmpty()) {
+            specificVideos.getKeys(false).forEach { bvid ->
+                val enabled = config.getBoolean("triple_action_rewards.specific_videos.$bvid.enabled", true)
+                val script = config.getString("triple_action_rewards.specific_videos.$bvid.reward_script", "")
 
+                videos.add(
+                    VideoInfo(
+                        bvid = bvid,
+                        title = "特定视频: $bvid",
+                        description = "专门为此视频配置的奖励",
+                        enabled = enabled,
+                        rewardScript = script ?: ""
+                    )
+                )
+            }
+        } else {
+            // 如果没有特定视频配置，显示提示信息
             videos.add(
                 VideoInfo(
-                    bvid = bvid,
-                    title = "特定视频: $bvid",
-                    description = "专门为此视频配置的奖励",
-                    enabled = enabled,
-                    rewardScript = script ?: ""
+                    bvid = "无特定配置",
+                    title = "暂无特定视频配置",
+                    description = "您可以在 config.yml 中添加特定BV号的奖励配置",
+                    enabled = false,
+                    rewardScript = ""
                 )
             )
         }
@@ -189,6 +216,8 @@ object VideoListGui {
                     val materialName = videoConfig?.getString("default_material", "BOOK") ?: "BOOK"
                     try { Material.valueOf(materialName) } catch (e: Exception) { Material.BOOK }
                 }
+                video.bvid == "功能已禁用" -> Material.BARRIER
+                video.bvid == "无特定配置" -> Material.GRAY_DYE
                 video.enabled -> {
                     val materialName = videoConfig?.getString("enabled_material", "EMERALD") ?: "EMERALD"
                     try { Material.valueOf(materialName) } catch (e: Exception) { Material.EMERALD }
@@ -203,45 +232,67 @@ object VideoListGui {
             val statusColor = if (video.enabled) theme.successColor else theme.errorColor
             val status = if (video.enabled) "启用" else "禁用"
 
-            val displayName = if (video.bvid == "默认奖励") {
-                videoConfig?.getString("default_name", "&6&l默认奖励配置")?.replace("&", "§") 
-                    ?: "§6§l默认奖励配置"
-            } else {
-                videoConfig?.getString("specific_name", "&6&l{bvid}")
-                    ?.replace("{bvid}", video.bvid)?.replace("&", "§")
-                    ?: "§6§l${video.bvid}"
+            val displayName = when (video.bvid) {
+                "默认奖励" -> {
+                    videoConfig?.getString("default_name", "&6&l默认奖励配置")?.replace("&", "§") 
+                        ?: "§6§l默认奖励配置"
+                }
+                "功能已禁用" -> "§c§l功能已禁用"
+                "无特定配置" -> "§7§l暂无特定配置"
+                else -> {
+                    videoConfig?.getString("specific_name", "&6&l{bvid}")
+                        ?.replace("{bvid}", video.bvid)?.replace("&", "§")
+                        ?: "§6§l${video.bvid}"
+                }
             }
 
-            val baseLore = if (video.bvid == "默认奖励") {
-                videoConfig?.getStringList("default_lore")?.map { line ->
-                    line.replace("&", "§")
-                        .replace("{status}", "$statusColor$status")
-                } ?: listOf(
-                    "§7适用于所有未特别配置的视频",
-                    "§7状态: $statusColor$status",
+            val baseLore = when (video.bvid) {
+                "默认奖励" -> {
+                    videoConfig?.getStringList("default_lore")?.map { line ->
+                        line.replace("&", "§")
+                            .replace("{status}", "$statusColor$status")
+                    } ?: listOf(
+                        "§7适用于所有未特别配置的视频",
+                        "§7状态: $statusColor$status",
+                        "",
+                        "§e左键: 查看脚本详情"
+                    )
+                }
+                "功能已禁用" -> listOf(
+                    "§7三联奖励功能已禁用",
+                    "§7请在配置文件中启用",
+                    "§7triple_action_rewards.enabled: true",
                     "",
-                    "§e左键: 查看脚本详情"
+                    "§e点击查看详情"
                 )
-            } else {
-                val rewardPreview = video.rewardScript.split("\n").take(3).joinToString("\n") { "§7  $it" }
-                val hasMore = if (video.rewardScript.split("\n").size > 3) "\n§7  ..." else ""
-                
-                videoConfig?.getStringList("specific_lore")?.map { line ->
-                    line.replace("&", "§")
-                        .replace("{bvid}", video.bvid)
-                        .replace("{status}", "$statusColor$status")
-                        .replace("{reward_preview}", rewardPreview + hasMore)
-                } ?: listOf(
-                    "§7BV号: §f${video.bvid}",
-                    "§7状态: $statusColor$status",
-                    "§7奖励预览:",
-                    rewardPreview,
-                    if (video.rewardScript.split("\n").size > 3) "§7  ..." else "",
+                "无特定配置" -> listOf(
+                    "§7暂无特定视频配置",
+                    "§7您可以在 config.yml 中添加特定BV号配置",
+                    "§7例如: triple_action_rewards.specific_videos.BV1234567890",
                     "",
-                    "§e左键: 检查一键三联",
-                    "§e右键: 快速检查",
-                    "§e Shift+左键: 查看完整脚本"
+                    "§e点击查看说明"
                 )
+                else -> {
+                    val rewardPreview = video.rewardScript.split("\n").take(3).joinToString("\n") { "§7  $it" }
+                    val hasMore = if (video.rewardScript.split("\n").size > 3) "\n§7  ..." else ""
+                    
+                    videoConfig?.getStringList("specific_lore")?.map { line ->
+                        line.replace("&", "§")
+                            .replace("{bvid}", video.bvid)
+                            .replace("{status}", "$statusColor$status")
+                            .replace("{reward_preview}", rewardPreview + hasMore)
+                    } ?: listOf(
+                        "§7BV号: §f${video.bvid}",
+                        "§7状态: $statusColor$status",
+                        "§7奖励预览:",
+                        rewardPreview,
+                        if (video.rewardScript.split("\n").size > 3) "§7  ..." else "",
+                        "",
+                        "§e左键: 检查一键三联",
+                        "§e右键: 快速检查",
+                        "§e Shift+左键: 查看完整脚本"
+                    )
+                }
             }
 
             return InvUIItemBuilder(material)
@@ -250,21 +301,37 @@ object VideoListGui {
         }
 
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
+            // 检查是否为特殊项目
+            if (video.bvid in listOf("默认奖励", "功能已禁用", "无特定配置")) {
+                when (video.bvid) {
+                    "默认奖励" -> {
+                        if (clickType == ClickType.SHIFT_LEFT) {
+                            showRewardScript(player, video)
+                        } else {
+                            player.sendMessage("§e这是默认奖励配置，适用于所有未特别配置的视频")
+                        }
+                    }
+                    "功能已禁用" -> {
+                        player.sendMessage("§c三联奖励功能已禁用，请在配置文件中启用")
+                    }
+                    "无特定配置" -> {
+                        player.sendMessage("§7暂无特定视频配置，您可以在 config.yml 中添加")
+                    }
+                }
+                return
+            }
+
             when (clickType) {
                 ClickType.LEFT -> {
-                    if (video.bvid != "默认奖励") {
-                        player.closeInventory()
-                        player.performCommand("bvp check ${video.bvid}")
-                    }
+                    player.closeInventory()
+                    player.performCommand("bvp check ${video.bvid}")
                 }
 
                 ClickType.RIGHT -> {
-                    if (video.bvid != "默认奖励") {
-                        player.closeInventory()
-                        // 快速检查逻辑
-                        player.sendLang("quickCheckStarted", video.bvid)
-                        player.performCommand("bvp check ${video.bvid}")
-                    }
+                    player.closeInventory()
+                    // 快速检查逻辑
+                    player.sendLang("quickCheckStarted", video.bvid)
+                    player.performCommand("bvp check ${video.bvid}")
                 }
 
                 ClickType.SHIFT_LEFT -> {
