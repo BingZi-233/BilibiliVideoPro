@@ -10,6 +10,7 @@ import online.bingzi.bilibili.video.pro.internal.database.service.VideoInteracti
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.LoginPollResult
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.auth.QRCodeResult
 import online.bingzi.bilibili.video.pro.internal.entity.netwrk.video.TripleActionResult
+import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
 import online.bingzi.bilibili.video.pro.internal.helper.MapItemHelper
 import online.bingzi.bilibili.video.pro.internal.helper.NMSHelper
 import online.bingzi.bilibili.video.pro.internal.helper.ketherEval
@@ -167,7 +168,7 @@ object BilibiliVideoProCommand {
                 guiEvent.call()
 
                 if (!guiEvent.isCancelled) {
-                    online.bingzi.bilibili.video.pro.internal.gui.GuiManager.showMainMenu(player)
+                    GuiManager.showMainMenu(player)
                 }
             }
         }
@@ -194,7 +195,7 @@ object BilibiliVideoProCommand {
 
         execute<CommandSender> { sender, _, _ ->
             submit(async = false) {
-                sender.sendMessage(online.bingzi.bilibili.video.pro.internal.gui.GuiManager.getCurrentThemeInfo())
+                sender.sendMessage(GuiManager.getCurrentThemeInfo())
             }
         }
     }
@@ -261,6 +262,40 @@ object BilibiliVideoProCommand {
                 submit(async = false) {
                     report.lines().forEach { line ->
                         sender.sendMessage(line)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 重载配置命令
+     */
+    @CommandBody
+    val reload = subCommand {
+        execute<CommandSender> { sender, _, _ ->
+            if (!sender.hasPermission("bilibilipro.admin")) {
+                sender.sendLang("noPermission")
+                return@execute
+            }
+
+            submit(async = true) {
+                try {
+                    // 重载配置文件
+                    config.reload()
+                    
+                    // 重载GUI配置
+                    GuiManager.reloadGuiConfig()
+                    
+                    // 重新初始化插件组件
+                    PluginManager.reinitialize()
+
+                    submit(async = false) {
+                        sender.sendLang("reloadSuccess")
+                    }
+                } catch (e: Exception) {
+                    submit(async = false) {
+                        sender.sendLang("reloadError", e.message ?: "Unknown error")
                     }
                 }
             }
