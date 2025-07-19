@@ -67,7 +67,7 @@ class BilibiliCookieJar : CookieJar {
                     "api.bilibili.com",
                     "passport.bilibili.com", 
                     "www.bilibili.com",
-                    ".bilibili.com"  // 通配符域名
+                    "bilibili.com"  // 通配符域名
                 )
                 
                 domains.forEach { domain ->
