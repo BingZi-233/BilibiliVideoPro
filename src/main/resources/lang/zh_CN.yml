@@ -89,12 +89,11 @@ achievementTripleStart: "&7☆☆☆ 开始三联之旅"
 
 # Login messages
 loginAlreadyBound: "&c您已绑定哔哩哔哩账户: &e{0}"
-loginAlreadyInProgress: "&c您已有正在进行的登录会话，请等待完成"
 loginCancelled: "&7已取消之前的登录会话，正在开始新的登录"
-networkNotInitialized: "&c网络管理器未初始化，请联系管理员"
 loginStarting: "&a正在开始登录流程..."
 loginQRCodeGenerated: "&a登录二维码已生成！请查看您的物品栏并使用哔哩哔哩APP扫描"
 loginQRCodeFailed: "&c生成登录二维码失败: {0}"
+loginQRCodeMapFailed: "&c地图显示失败: {0}"
 loginError: "&c登录过程中发生错误: {0}"
 loginTimeout: "&c登录超时，请重新尝试"
 loginSuccess: "&a恭喜！成功绑定哔哩哔哩账户: &e{0}"
@@ -131,7 +130,6 @@ tripleActionCompleted: "&a&l恭喜！您已完成视频「&f{0}&a&l」的一键�
 tripleActionRewardAwarded: "&a&l您已获得视频「&f{0}&a&l」的一键三联奖励！"
 tripleActionIncomplete: "&e一键三联状态: 点赞 {0} | 投币 {1} | 收藏 {2}"
 checkTripleActionFailed: "&c检查一键三联状态失败: {0}"
-getVideoInfoFailed: "&c获取视频信息失败: {0}"
 checkTripleActionError: "&c检查一键三联时发生错误: {0}"
 tripleActionCheckContext: "一键三联检查"
 playerUuidValidationFailed: "玩家UUID验证失败"
@@ -156,7 +154,6 @@ statusError: "&c获取状态时发生错误: {0}"
 # Unbind messages
 unbindPlayerNotFound: "&c未找到玩家 &e{0} &c的绑定记录"
 unbindSuccess: "&a成功解绑玩家 &e{0} &a的哔哩哔哩账户 &f{1}"
-unbindFailed: "&c解绑玩家 &e{0} &c失败"
 unbindError: "&c解绑时发生错误: {0}"
 
 # Info messages
@@ -324,3 +321,10 @@ databaseDaoInitFailed: "DAO初始化失败: {0}"
 databaseClosing: "正在关闭数据库连接..."
 databaseClosed: "数据库连接已关闭"
 databaseCloseError: "关闭数据库连接时出错: {0}"
+
+# NMSHelper messages
+nmsPacketFieldsFailed: "地图数据包字段设置失败 (ID: {0}): {1}"
+nmsMapPacketFailed: "向玩家 {0} 发送地图数据包失败 (ID: {1}): {2}"
+nmsVirtualItemFailed: "向玩家 {0} 发送虚拟物品失败: {1}"
+nmsVirtualMapItemFailed: "向玩家 {0} 发送虚拟地图物品失败: {1}"
+nmsClearVirtualItemFailed: "清除玩家 {0} 虚拟物品失败: {1}"

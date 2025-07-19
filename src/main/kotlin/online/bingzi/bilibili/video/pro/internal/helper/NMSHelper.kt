@@ -127,14 +127,14 @@ object NMSHelper {
                 }
 
             } catch (fieldException: Exception) {
-                console().sendError("NMSHelper", "Failed to set packet fields for mapId $mapId: ${fieldException.message}")
+                console().sendError("nmsPacketFieldsFailed", mapId, fieldException.message ?: "Unknown error")
                 return // 如果字段设置失败，直接返回，不发送数据包
             }
 
             protocolManager.sendServerPacket(player, packet)
             
         } catch (e: Exception) {
-            console().sendError("NMSHelper", "Failed to send map packet for mapId $mapId to player ${player.name}: ${e.message}")
+            console().sendError("nmsMapPacketFailed", player.name, mapId, e.message ?: "Unknown error")
         }
     }
 
@@ -165,7 +165,7 @@ object NMSHelper {
             
             protocolManager.sendServerPacket(player, packet)
         } catch (e: Exception) {
-            console().sendError("NMSHelper", "Failed to send virtual item to player ${player.name}", e)
+            console().sendError("nmsVirtualItemFailed", player.name, e.message ?: "Unknown error")
         }
     }
 
@@ -202,7 +202,7 @@ object NMSHelper {
                 }
             }
         } catch (e: Exception) {
-            console().sendError("NMSHelper", "Failed to send virtual map item to player ${player.name}", e)
+            console().sendError("nmsVirtualMapItemFailed", player.name, e.message ?: "Unknown error")
         }
     }
 
@@ -231,7 +231,7 @@ object NMSHelper {
             
             protocolManager.sendServerPacket(player, packet)
         } catch (e: Exception) {
-            console().sendError("NMSHelper", "Failed to clear virtual item for player ${player.name}", e)
+            console().sendError("nmsClearVirtualItemFailed", player.name, e.message ?: "Unknown error")
         }
     }
 
