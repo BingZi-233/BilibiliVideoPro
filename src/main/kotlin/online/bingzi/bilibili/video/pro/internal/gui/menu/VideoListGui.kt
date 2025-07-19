@@ -1,6 +1,7 @@
 package online.bingzi.bilibili.video.pro.internal.gui.menu
 
 import online.bingzi.bilibili.video.pro.internal.gui.GuiManager
+import online.bingzi.bilibili.video.pro.internal.gui.config.GuiConfigManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -29,36 +30,35 @@ object VideoListGui {
      */
     fun show(player: Player) {
         val videos = getConfiguredVideos()
+        val guiLayout = GuiConfigManager.getVideoListLayout()
+        val theme = GuiConfigManager.getCurrentTheme()
+
+        // 使用配置的布局或回退到默认布局
+        val layout = guiLayout?.layout ?: listOf(
+            "# # # # # # # # #",
+            "# x x x x x x x #",
+            "# x x x x x x x #",
+            "# x x x x x x x #",
+            "# < # # b # # > #"
+        )
 
         val gui = PagedGui.items()
-            .setStructure(
-                "# # # # # # # # #",
-                "# x x x x x x x #",
-                "# x x x x x x x #",
-                "# x x x x x x x #",
-                "# < # # # # # > #"
-            )
-            .addIngredient('#', BorderItem())
-            .addIngredient('<', object : AbstractItem() {
-                override fun getItemProvider(): ItemProvider {
-                    return InvUIItemBuilder(Material.ARROW).setDisplayName("§7上一页")
-                }
-
-                override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
-            })
-            .addIngredient('>', object : AbstractItem() {
-                override fun getItemProvider(): ItemProvider {
-                    return InvUIItemBuilder(Material.ARROW).setDisplayName("§7下一页")
-                }
-
-                override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
-            })
-            .setContent(videos.map { VideoItem(player, it) })
+            .setStructure(*layout.toTypedArray())
+            .addIngredient('#', BorderItem(theme))
+            .addIngredient('<', PreviousPageItem(guiLayout))
+            .addIngredient('>', NextPageItem(guiLayout))
+            .addIngredient('b', BackToMainItem(guiLayout))
+            .setContent(videos.map { VideoItem(player, it, guiLayout) })
             .build()
+
+        val title = GuiConfigManager.applyThemeColors(
+            guiLayout?.title ?: "§6§lBilibiliVideoPro §f- 视频列表",
+            theme
+        )
 
         val window = Window.single()
             .setViewer(player)
-            .setTitle("§6§lBilibiliVideoPro §f- 视频列表")
+            .setTitle(title)
             .setGui(gui)
             .build()
 
@@ -118,9 +118,9 @@ object VideoListGui {
     /**
      * 边框装饰物品
      */
-    private class BorderItem : AbstractItem() {
+    private class BorderItem(private val theme: GuiConfigManager.GuiTheme) : AbstractItem() {
         override fun getItemProvider(): ItemProvider {
-            return InvUIItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
+            return InvUIItemBuilder(theme.borderMaterial)
                 .setDisplayName("§f ")
         }
 
@@ -130,29 +130,123 @@ object VideoListGui {
     }
 
     /**
+     * 上一页按钮
+     */
+    private class PreviousPageItem(private val guiLayout: GuiConfigManager.GuiLayout?) : AbstractItem() {
+        override fun getItemProvider(): ItemProvider {
+            val item = guiLayout?.items?.get("<")
+            return InvUIItemBuilder(item?.material ?: Material.ARROW)
+                .setDisplayName(item?.name?.replace("&", "§") ?: "§7上一页")
+                .addLoreLines(*(item?.lore?.map { it.replace("&", "§") }?.toTypedArray() ?: arrayOf("§7点击查看上一页")))
+        }
+
+        override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
+    }
+
+    /**
+     * 下一页按钮
+     */
+    private class NextPageItem(private val guiLayout: GuiConfigManager.GuiLayout?) : AbstractItem() {
+        override fun getItemProvider(): ItemProvider {
+            val item = guiLayout?.items?.get(">")
+            return InvUIItemBuilder(item?.material ?: Material.ARROW)
+                .setDisplayName(item?.name?.replace("&", "§") ?: "§7下一页")
+                .addLoreLines(*(item?.lore?.map { it.replace("&", "§") }?.toTypedArray() ?: arrayOf("§7点击查看下一页")))
+        }
+
+        override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {}
+    }
+
+    /**
+     * 返回主菜单按钮
+     */
+    private class BackToMainItem(private val guiLayout: GuiConfigManager.GuiLayout?) : AbstractItem() {
+        override fun getItemProvider(): ItemProvider {
+            val item = guiLayout?.items?.get("b")
+            return InvUIItemBuilder(item?.material ?: Material.ARROW)
+                .setDisplayName(item?.name?.replace("&", "§") ?: "§c§l返回")
+                .addLoreLines(*(item?.lore?.map { it.replace("&", "§") }?.toTypedArray() ?: arrayOf("§7返回主菜单", "", "§e左键点击")))
+        }
+
+        override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {
+            GuiManager.showMainMenu(player)
+        }
+    }
+
+    /**
      * 视频项目
      */
-    private class VideoItem(private val player: Player, private val video: VideoInfo) : AbstractItem() {
+    private class VideoItem(
+        private val player: Player, 
+        private val video: VideoInfo, 
+        private val guiLayout: GuiConfigManager.GuiLayout?
+    ) : AbstractItem() {
         override fun getItemProvider(): ItemProvider {
-            val material = if (video.enabled) Material.EMERALD else Material.REDSTONE
-            val statusColor = if (video.enabled) "§a" else "§c"
+            val videoConfig = GuiConfigManager.videoListConfig.getConfigurationSection("video_item")
+            
+            val material = when {
+                video.bvid == "默认奖励" -> {
+                    val materialName = videoConfig?.getString("default_material", "BOOK") ?: "BOOK"
+                    try { Material.valueOf(materialName) } catch (e: Exception) { Material.BOOK }
+                }
+                video.enabled -> {
+                    val materialName = videoConfig?.getString("enabled_material", "EMERALD") ?: "EMERALD"
+                    try { Material.valueOf(materialName) } catch (e: Exception) { Material.EMERALD }
+                }
+                else -> {
+                    val materialName = videoConfig?.getString("disabled_material", "REDSTONE") ?: "REDSTONE"
+                    try { Material.valueOf(materialName) } catch (e: Exception) { Material.REDSTONE }
+                }
+            }
+
+            val theme = GuiConfigManager.getCurrentTheme()
+            val statusColor = if (video.enabled) theme.successColor else theme.errorColor
             val status = if (video.enabled) "启用" else "禁用"
 
-            return InvUIItemBuilder(material)
-                .setDisplayName("§6§l${video.title}")
-                .addLoreLines(
-                    "§7BV号: §f${video.bvid}",
-                    "§7描述: §f${video.description}",
+            val displayName = if (video.bvid == "默认奖励") {
+                videoConfig?.getString("default_name", "&6&l默认奖励配置")?.replace("&", "§") 
+                    ?: "§6§l默认奖励配置"
+            } else {
+                videoConfig?.getString("specific_name", "&6&l{bvid}")
+                    ?.replace("{bvid}", video.bvid)?.replace("&", "§")
+                    ?: "§6§l${video.bvid}"
+            }
+
+            val baseLore = if (video.bvid == "默认奖励") {
+                videoConfig?.getStringList("default_lore")?.map { line ->
+                    line.replace("&", "§")
+                        .replace("{status}", "$statusColor$status")
+                } ?: listOf(
+                    "§7适用于所有未特别配置的视频",
                     "§7状态: $statusColor$status",
                     "",
-                    "§e奖励脚本预览:",
-                    *video.rewardScript.split("\n").take(3).map { "§7  $it" }.toTypedArray(),
+                    "§e左键: 查看脚本详情"
+                )
+            } else {
+                val rewardPreview = video.rewardScript.split("\n").take(3).joinToString("\n") { "§7  $it" }
+                val hasMore = if (video.rewardScript.split("\n").size > 3) "\n§7  ..." else ""
+                
+                videoConfig?.getStringList("specific_lore")?.map { line ->
+                    line.replace("&", "§")
+                        .replace("{bvid}", video.bvid)
+                        .replace("{status}", "$statusColor$status")
+                        .replace("{reward_preview}", rewardPreview + hasMore)
+                } ?: listOf(
+                    "§7BV号: §f${video.bvid}",
+                    "§7状态: $statusColor$status",
+                    "§7奖励预览:",
+                    rewardPreview,
                     if (video.rewardScript.split("\n").size > 3) "§7  ..." else "",
                     "",
-                    if (video.bvid != "默认奖励") "§e左键: 检查一键三联" else "",
-                    if (video.bvid != "默认奖励") "§e右键: 快速检查" else "",
+                    "§e左键: 检查一键三联",
+                    "§e右键: 快速检查",
                     "§e Shift+左键: 查看完整脚本"
                 )
+            }
+
+            return InvUIItemBuilder(material)
+                .setDisplayName(displayName)
+                .addLoreLines(*baseLore.toTypedArray())
         }
 
         override fun handleClick(clickType: ClickType, player: Player, event: InventoryClickEvent) {

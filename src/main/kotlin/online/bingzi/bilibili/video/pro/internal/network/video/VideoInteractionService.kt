@@ -52,14 +52,18 @@ class VideoInteractionService(private val apiClient: BilibiliApiClient) {
                 return TripleActionResult.Error("响应数据格式错误")
             }
 
-            val like = data.get("like")?.asInt ?: 0
+            val like = data.get("like")?.let { 
+                if (it.isJsonPrimitive && it.asJsonPrimitive.isBoolean) it.asBoolean else it.asInt == 1
+            } ?: false
             val coin = data.get("coin")?.asInt ?: 0
-            val favorite = data.get("favorite")?.asInt ?: 0
+            val favorite = data.get("favorite")?.let {
+                if (it.isJsonPrimitive && it.asJsonPrimitive.isBoolean) it.asBoolean else it.asInt == 1
+            } ?: false
 
             val status = TripleActionStatus(
-                isLiked = like == 1,
+                isLiked = like,
                 isCoined = coin > 0,
-                isFavorited = favorite == 1,
+                isFavorited = favorite,
                 coinCount = coin
             )
 
