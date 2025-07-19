@@ -25,6 +25,7 @@ import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
 import taboolib.common.platform.command.mainCommand
 import taboolib.common.platform.command.subCommand
+import taboolib.common.platform.command.suggest
 import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
 import taboolib.module.configuration.Config
@@ -40,7 +41,12 @@ import taboolib.platform.util.sendError
  * BilibiliVideoPro 主命令处理器
  * 提供登录、一键三联检查、状态管理等功能
  */
-@CommandHeader(name = "bilibilipro", aliases = ["bvp", "bilibili"], permission = "bilibilipro.use")
+@CommandHeader(
+    name = "bilibilipro",
+    aliases = ["bvp", "bilibili"],
+    description = "BilibiliVideoPro插件主命令 - 提供Bilibili账户绑定、视频交互验证等功能",
+    permission = "bilibilipro.use"
+)
 object BilibiliVideoProCommand {
 
     @Config("config.yml")
@@ -71,7 +77,7 @@ object BilibiliVideoProCommand {
     /**
      * 登录命令 - 开始QR码登录流程
      */
-    @CommandBody
+    @CommandBody(aliases = ["bind", "connect"])
     val login = subCommand {
         execute<Player> { player, _, _ ->
             submit(async = true) {
@@ -89,9 +95,12 @@ object BilibiliVideoProCommand {
     /**
      * 检查命令 - 检查指定BV号是否完成一键三联
      */
-    @CommandBody
+    @CommandBody(aliases = ["verify", "validate"])
     val check = subCommand {
         dynamic("bvid") {
+            suggest {
+                listOf("BV1xx411c7mD", "BV1yy411c7mE")
+            }
             execute<Player> { player, _, argument ->
                 val bvid = argument
                 submit(async = true) {
@@ -110,7 +119,7 @@ object BilibiliVideoProCommand {
     /**
      * 状态命令 - 查看玩家绑定状态
      */
-    @CommandBody
+    @CommandBody(aliases = ["stat", "profile"])
     val status = subCommand {
         execute<Player> { player, _, _ ->
             submit(async = true) {
@@ -126,95 +135,12 @@ object BilibiliVideoProCommand {
     }
 
     /**
-     * 解绑命令 - 管理员解绑玩家账户
+     * 管理员命令组
      */
-    @CommandBody
-    val unbind = subCommand {
-        dynamic("player") {
-            execute<CommandSender> { sender, _, argument ->
-                if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendError("noPermission")
-                    return@execute
-                }
-
-                val targetPlayer = argument
-                submit(async = true) {
-                    unbindPlayer(sender, targetPlayer)
-                }
-            }
-        }
-    }
-
-    /**
-     * 插件信息命令
-     */
-    @CommandBody
-    val info = subCommand {
-        execute<CommandSender> { sender, _, _ ->
-            sender.sendInfo("infoTitle")
-            sender.sendInfo("infoVersion")
-            sender.sendInfo("infoAuthor")
-            sender.sendInfo("infoDescription")
-            sender.sendInfo("infoInitialized", if (PluginManager.isInitialized()) sender.asLangText("infoYes") else sender.asLangText("infoNo"))
-        }
-    }
-
-    /**
-     * GUI命令 - 打开主菜单GUI
-     */
-    @CommandBody
-    val gui = subCommand {
-        execute<Player> { player, _, _ ->
-            submit(async = false) {
-                // 发布GUI操作事件
-                val guiEvent = GuiActionEvent(player, GuiType.MAIN_MENU, GuiActionType.OPEN)
-                guiEvent.call()
-
-                if (!guiEvent.isCancelled) {
-                    GuiManager.showMainMenu(player)
-                }
-            }
-        }
-    }
-
-    /**
-     * GUI主题命令
-     */
-    @CommandBody
-    val theme = subCommand {
-        dynamic("theme_name") {
-            execute<CommandSender> { sender, _, argument ->
-                if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendError("noPermission")
-                    return@execute
-                }
-
-                val themeName = argument
-                submit(async = true) {
-                    switchGuiTheme(sender, themeName)
-                }
-            }
-        }
-
-        execute<CommandSender> { sender, _, _ ->
-            submit(async = false) {
-                sender.sendMessage(GuiManager.getCurrentThemeInfo())
-            }
-        }
-    }
-
-    /**
-     * 系统状态命令 - 管理员查看系统状态
-     */
-    @CommandBody
-    val status_admin = subCommand {
-        literal("admin") {
+    @CommandBody(permission = "bilibilipro.admin")
+    val admin = subCommand {
+        literal("status") {
             execute<CommandSender> { sender, _, _ ->
-                if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendError("noPermission")
-                    return@execute
-                }
-
                 submit(async = true) {
                     // 发布系统状态查询事件
                     val systemStatusEvent = SystemStatusQueryEvent(sender, emptyMap(), emptyMap())
@@ -246,84 +172,155 @@ object BilibiliVideoProCommand {
                 }
             }
         }
-    }
-
-    /**
-     * 系统报告命令 - 生成详细报告
-     */
-    @CommandBody
-    val report = subCommand {
-        execute<CommandSender> { sender, _, _ ->
-            if (!sender.hasPermission("bilibilipro.admin")) {
-                sender.sendError("noPermission")
-                return@execute
-            }
-
-            submit(async = true) {
-                val report = SystemMonitor.generateSystemReport()
-
-                submit(async = false) {
-                    report.lines().forEach { line ->
-                        sender.sendMessage(line)
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * 重载配置命令
-     */
-    @CommandBody
-    val reload = subCommand {
-        execute<CommandSender> { sender, _, _ ->
-            if (!sender.hasPermission("bilibilipro.admin")) {
-                sender.sendError("noPermission")
-                return@execute
-            }
-
-            submit(async = true) {
-                try {
-                    // 重载配置文件
-                    config.reload()
-                    
-                    // 重载GUI配置
-                    GuiManager.reloadGuiConfig()
-                    
-                    // 重新初始化插件组件
-                    PluginManager.reinitialize()
-
-                    submit(async = false) {
-                        sender.sendInfo("reloadSuccess")
-                    }
-                } catch (e: Exception) {
-                    submit(async = false) {
-                        sender.sendError("reloadError", e.message ?: "Unknown error")
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * 清理统计命令
-     */
-    @CommandBody
-    val clean = subCommand {
-        literal("stats") {
+        
+        literal("report") {
             execute<CommandSender> { sender, _, _ ->
-                if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendError("noPermission")
-                    return@execute
-                }
-
                 submit(async = true) {
-                    SystemMonitor.clearStatistics()
-                    online.bingzi.bilibili.video.pro.internal.error.ErrorHandler.clearErrorStatistics()
+                    val report = SystemMonitor.generateSystemReport()
 
                     submit(async = false) {
-                        sender.sendInfo("cleanStatsSuccess")
+                        report.lines().forEach { line ->
+                            sender.sendMessage(line)
+                        }
                     }
+                }
+            }
+        }
+        
+        literal("reload") {
+            execute<CommandSender> { sender, _, _ ->
+                submit(async = true) {
+                    try {
+                        // 重载配置文件
+                        config.reload()
+                        
+                        // 重载GUI配置
+                        GuiManager.reloadGuiConfig()
+                        
+                        // 重新初始化插件组件
+                        PluginManager.reinitialize()
+
+                        submit(async = false) {
+                            sender.sendInfo("reloadSuccess")
+                        }
+                    } catch (e: Exception) {
+                        submit(async = false) {
+                            sender.sendError("reloadError", e.message ?: "Unknown error")
+                        }
+                    }
+                }
+            }
+        }
+        
+        literal("clean") {
+            literal("stats") {
+                execute<CommandSender> { sender, _, _ ->
+                    submit(async = true) {
+                        SystemMonitor.clearStatistics()
+                        online.bingzi.bilibili.video.pro.internal.error.ErrorHandler.clearErrorStatistics()
+
+                        submit(async = false) {
+                            sender.sendInfo("cleanStatsSuccess")
+                        }
+                    }
+                }
+            }
+        }
+        
+        literal("unbind") {
+            dynamic("player") {
+                suggest {
+                    org.bukkit.Bukkit.getOnlinePlayers().map { it.name }
+                }
+                execute<CommandSender> { sender, _, argument ->
+                    val targetPlayer = argument
+                    submit(async = true) {
+                        unbindPlayer(sender, targetPlayer)
+                    }
+                }
+            }
+        }
+        
+        literal("theme") {
+            dynamic("theme_name") {
+                suggest {
+                    listOf("default", "dark", "light", "custom")
+                }
+                execute<CommandSender> { sender, _, argument ->
+                    val themeName = argument
+                    submit(async = true) {
+                        switchGuiTheme(sender, themeName)
+                    }
+                }
+            }
+            execute<CommandSender> { sender, _, _ ->
+                submit(async = false) {
+                    sender.sendMessage(GuiManager.getCurrentThemeInfo())
+                }
+            }
+        }
+    }
+
+    /**
+     * 插件信息命令
+     */
+    @CommandBody(aliases = ["about", "version"])
+    val info = subCommand {
+        execute<CommandSender> { sender, _, _ ->
+            sender.sendInfo("infoTitle")
+            sender.sendInfo("infoVersion")
+            sender.sendInfo("infoAuthor")
+            sender.sendInfo("infoDescription")
+            sender.sendInfo("infoInitialized", if (PluginManager.isInitialized()) sender.asLangText("infoYes") else sender.asLangText("infoNo"))
+        }
+    }
+
+    /**
+     * GUI命令 - 打开主菜单GUI
+     */
+    @CommandBody(aliases = ["menu", "ui"])
+    val gui = subCommand {
+        execute<Player> { player, _, _ ->
+            submit(async = false) {
+                // 发布GUI操作事件
+                val guiEvent = GuiActionEvent(player, GuiType.MAIN_MENU, GuiActionType.OPEN)
+                guiEvent.call()
+
+                if (!guiEvent.isCancelled) {
+                    GuiManager.showMainMenu(player)
+                }
+            }
+        }
+    }
+
+    /**
+     * 帮助命令
+     */
+    @CommandBody(aliases = ["?", "h"], optional = true)
+    val help = subCommand {
+        execute<CommandSender> { sender, _, _ ->
+            sender.sendInfo("commandHelpTitle")
+            sender.sendInfo("commandHelpLogin")
+            sender.sendInfo("commandHelpCheck")
+            sender.sendInfo("commandHelpStatus")
+            sender.sendInfo("commandHelpInfo")
+            sender.sendInfo("commandHelpGui")
+            if (sender.hasPermission("bilibilipro.admin")) {
+                sender.sendInfo("commandHelpAdmin")
+            }
+        }
+        
+        literal("admin") {
+            execute<CommandSender> { sender, _, _ ->
+                if (sender.hasPermission("bilibilipro.admin")) {
+                    sender.sendInfo("commandHelpAdminStatus")
+                    sender.sendInfo("commandHelpAdminReport")
+                    sender.sendInfo("commandHelpAdminReload")
+                    sender.sendInfo("commandHelpAdminClean")
+                    sender.sendInfo("commandHelpAdminUnbind")
+                    sender.sendInfo("commandHelpAdminTheme")
+                } else {
+                    sender.sendError("noPermission")
                 }
             }
         }
