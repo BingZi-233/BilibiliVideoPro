@@ -30,6 +30,7 @@ import taboolib.common.platform.function.submit
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.module.lang.asLangText
+import taboolib.module.lang.sendError
 import taboolib.platform.util.asLangText
 import taboolib.platform.util.sendInfo
 import taboolib.platform.util.sendWarn
@@ -379,10 +380,15 @@ object BilibiliVideoProCommand {
                     loginStartEvent.call()
 
                     // 创建并发送虚拟QR码地图物品到玩家主手
-                    val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, console().asLangText("loginQRCodeTitle"))
+                    val mapItem = MapItemHelper.createBilibiliLoginQRCodeMap(qrData.url, qrData.qrcodeKey)
                     submit(async = false) {
-                        NMSHelper.sendTemporaryVirtualMapItem(player, -1, mapItem, 600) // 10分钟后自动清除
-                        player.sendInfo("loginQRCodeGenerated")
+                        try {
+                            NMSHelper.sendTemporaryVirtualMapItem(player, -1, mapItem, 600) // 10分钟后自动清除
+                            player.sendInfo("loginQRCodeGenerated")
+                        } catch (e: Exception) {
+                            player.sendError("loginQRCodeFailed", "地图显示失败: ${e.message}")
+                            console().sendError("BilibiliVideoProCommand", "Failed to send QR code map to player ${player.name}", e)
+                        }
                     }
 
                     // 开始轮询登录状态
