@@ -6,6 +6,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.MapMeta
 import taboolib.common.platform.function.console
+import taboolib.common.platform.function.submit
 import taboolib.module.lang.sendError
 
 /**
@@ -77,64 +78,63 @@ object NMSHelper {
         try {
             val packet = protocolManager.createPacket(PacketType.Play.Server.MAP)
 
-            // 针对Minecraft 1.21.1版本的字段设置
-            // 使用修饰符方式设置复杂字段，避免直接索引访问
-            
-            // 1. 写入地图ID - 使用modifier安全设置
-            packet.modifier.write(0, mapId)
-
-            // 2. 写入缩放级别
-            packet.bytes.write(0, scale)
-
-            // 3. 写入锁定状态
-            packet.booleans.write(0, locked)
-
-            // 4. 写入位置跟踪状态
-            if (packet.booleans.size() > 1) {
-                packet.booleans.write(1, trackingPosition)
-            }
-
-            // 5. 写入图标列表 - 使用空列表避免null问题
+            // 针对Minecraft 1.21.1版本，简化字段设置，只设置必要的字段
             try {
-                packet.modifier.write(1, emptyList<Any>())
-            } catch (e: Exception) {
-                // 如果设置图标失败，尝试使用Optional.empty()
-                try {
-                    packet.modifier.write(1, java.util.Optional.empty<List<Any>>())
-                } catch (e2: Exception) {
-                    // 静默忽略图标设置错误
-                }
-            }
-
-            // 6. 写入数据更新区域
-            if (data.isNotEmpty()) {
-                // 使用安全的方式设置整数字段
-                if (packet.integers.size() >= 5) {
-                    packet.integers.write(0, dirtyX)
-                    packet.integers.write(1, dirtyY)  
-                    packet.integers.write(2, dirtyWidth)
-                    packet.integers.write(3, dirtyHeight)
+                // 1. 设置地图ID - 对于MAP包，这通常是第一个字段
+                if (packet.integers.size() > 0) {
+                    packet.integers.write(0, mapId)
                 } else {
-                    // 如果整数字段不足，尝试其他方式
-                    try {
-                        packet.modifier.write(2, dirtyX)
-                        packet.modifier.write(3, dirtyY)
-                        packet.modifier.write(4, dirtyWidth)
-                        packet.modifier.write(5, dirtyHeight)
-                    } catch (e: Exception) {
-                        // 忽略位置设置错误
-                    }
+                    // 如果没有integers字段，尝试用modifier
+                    packet.modifier.write(0, mapId)
                 }
-                packet.byteArrays.write(0, data)
-            } else {
-                // 空数据包处理
-                packet.byteArrays.write(0, ByteArray(0))
+
+                // 2. 设置缩放级别
+                if (packet.bytes.size() > 0) {
+                    packet.bytes.write(0, scale)
+                }
+
+                // 3. 设置布尔值字段（locked和trackingPosition）
+                if (packet.booleans.size() >= 1) {
+                    packet.booleans.write(0, locked)
+                }
+                if (packet.booleans.size() >= 2) {
+                    packet.booleans.write(1, trackingPosition)
+                }
+
+                // 4. 设置图标列表（可选）
+                try {
+                    packet.modifier.write(1, emptyList<Any>())
+                } catch (e: Exception) {
+                    // 忽略图标设置错误
+                }
+
+                // 5. 设置地图数据
+                if (data.isNotEmpty()) {
+                    // 设置数据区域坐标和尺寸
+                    val intSize = packet.integers.size()
+                    if (intSize >= 5) {
+                        packet.integers.write(1, dirtyX)
+                        packet.integers.write(2, dirtyY) 
+                        packet.integers.write(3, dirtyWidth)
+                        packet.integers.write(4, dirtyHeight)
+                    }
+                    
+                    // 设置像素数据
+                    packet.byteArrays.write(0, data)
+                } else {
+                    // 空数据包
+                    packet.byteArrays.write(0, ByteArray(0))
+                }
+
+            } catch (fieldException: Exception) {
+                console().sendError("NMSHelper", "Failed to set packet fields for mapId $mapId: ${fieldException.message}")
+                return // 如果字段设置失败，直接返回，不发送数据包
             }
 
             protocolManager.sendServerPacket(player, packet)
+            
         } catch (e: Exception) {
             console().sendError("NMSHelper", "Failed to send map packet for mapId $mapId to player ${player.name}: ${e.message}")
-            // 作为后备方案，尝试不发送地图数据包
         }
     }
 
@@ -192,7 +192,7 @@ object NMSHelper {
                     val mapId = mapView.id
                     
                     // 延迟发送地图数据包，确保客户端已经接收到物品
-                    taboolib.common.platform.function.submit(delay = 2L) {
+                    submit(delay = 2L) {
                         if (player.isOnline) {
                             // 发送空的地图数据包来触发地图展开
                             val mapData = ByteArray(128 * 128) { 0 }
@@ -248,7 +248,7 @@ object NMSHelper {
         sendVirtualMapItem(player, slot, mapItem)
         
         // 使用TabooLib的延时任务在指定时间后清除物品
-        taboolib.common.platform.function.submit(delay = durationSeconds * 20L) {
+        submit(delay = durationSeconds * 20L) {
             if (player.isOnline) {
                 clearVirtualItem(player, slot)
             }
@@ -267,7 +267,7 @@ object NMSHelper {
         sendVirtualItem(player, slot, itemStack)
         
         // 使用TabooLib的延时任务在指定时间后清除物品
-        taboolib.common.platform.function.submit(delay = durationSeconds * 20L) {
+        submit(delay = durationSeconds * 20L) {
             if (player.isOnline) {
                 clearVirtualItem(player, slot)
             }
