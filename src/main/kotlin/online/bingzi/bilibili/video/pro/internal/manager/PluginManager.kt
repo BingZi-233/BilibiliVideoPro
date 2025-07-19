@@ -7,8 +7,9 @@ import online.bingzi.bilibili.video.pro.internal.security.SecureKeyManager
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.console
-import taboolib.common.platform.function.getDataFolder
-import taboolib.module.lang.sendLang
+import taboolib.module.lang.sendInfo
+import taboolib.module.lang.sendWarn
+import taboolib.module.lang.sendError
 
 /**
  * 插件管理器
@@ -27,36 +28,36 @@ object PluginManager {
             return
         }
 
-        console().sendLang("pluginInitializing")
+        console().sendInfo("pluginInitializing")
 
         try {
             // 初始化安全密钥管理器
             if (SecureKeyManager.initialize()) {
-                console().sendLang("pluginSecurityInitialized")
+                console().sendInfo("pluginSecurityInitialized")
 
                 // 初始化数据库
                 if (DatabaseManager.initialize()) {
-                    console().sendLang("pluginDatabaseSuccess")
+                    console().sendInfo("pluginDatabaseSuccess")
 
                     // 初始化网络管理器
                     BilibiliNetworkManager.getInstance().initialize()
-                    console().sendLang("pluginNetworkInitialized")
+                    console().sendInfo("pluginNetworkInitialized")
 
                     // 初始化GUI管理器
                     GuiManager.initialize()
 
                     isInitialized = true
-                    console().sendLang("pluginInitializationSuccess")
+                    console().sendInfo("pluginInitializationSuccess")
 
                 } else {
-                    console().sendLang("pluginDatabaseFailed")
+                    console().sendError("pluginDatabaseFailed")
                 }
             } else {
-                console().sendLang("pluginSecurityInitializationFailed")
+                console().sendError("pluginSecurityInitializationFailed")
             }
 
         } catch (e: Exception) {
-            console().sendLang("pluginInitializationFailed", e.message ?: "Unknown error")
+            console().sendError("pluginInitializationFailed", e.message ?: "Unknown error")
             e.printStackTrace()
         }
     }
@@ -67,28 +68,28 @@ object PluginManager {
     @Awake(value = LifeCycle.ACTIVE)
     fun healthCheck() {
         if (!isInitialized) {
-            console().sendLang("pluginInitializationNotInitialized")
+            console().sendWarn("pluginInitializationNotInitialized")
             return
         }
 
         try {
             // 执行密钥管理器完整性检查
             if (SecureKeyManager.verifyKeyIntegrity()) {
-                console().sendLang("pluginSecurityHealthy")
+                console().sendInfo("pluginSecurityHealthy")
             } else {
-                console().sendLang("pluginSecurityUnhealthy")
+                console().sendWarn("pluginSecurityUnhealthy")
             }
 
             // 执行数据库健康检查
             val healthInfo = DatabaseManager.healthCheck()
             if (healthInfo.isHealthy) {
-                console().sendLang("pluginDatabaseHealthy")
+                console().sendInfo("pluginDatabaseHealthy")
             } else {
-                console().sendLang("pluginDatabaseUnhealthy", healthInfo.message)
+                console().sendWarn("pluginDatabaseUnhealthy", healthInfo.message)
             }
 
         } catch (e: Exception) {
-            console().sendLang("pluginHealthCheckFailed", e.message ?: "Unknown error")
+            console().sendError("pluginHealthCheckFailed", e.message ?: "Unknown error")
         }
     }
 
@@ -101,26 +102,26 @@ object PluginManager {
             return
         }
 
-        console().sendLang("pluginShutdownStarting")
+        console().sendInfo("pluginShutdownStarting")
 
         try {
             // 关闭网络管理器
             BilibiliNetworkManager.destroyInstance()
-            console().sendLang("pluginNetworkClosed")
+            console().sendInfo("pluginNetworkClosed")
 
             // 关闭数据库连接
             DatabaseManager.close()
-            console().sendLang("pluginShutdownDatabaseClosed")
+            console().sendInfo("pluginShutdownDatabaseClosed")
 
             // 清理安全密钥管理器
             SecureKeyManager.cleanup()
-            console().sendLang("pluginSecurityCleaned")
+            console().sendInfo("pluginSecurityCleaned")
 
             isInitialized = false
-            console().sendLang("pluginShutdownSuccess")
+            console().sendInfo("pluginShutdownSuccess")
 
         } catch (e: Exception) {
-            console().sendLang("pluginShutdownFailed", e.message ?: "Unknown error")
+            console().sendError("pluginShutdownFailed", e.message ?: "Unknown error")
         }
     }
 
@@ -135,7 +136,7 @@ object PluginManager {
      * 手动重新初始化（用于调试或命令）
      */
     fun reinitialize() {
-        console().sendLang("pluginReinitialize")
+        console().sendInfo("pluginReinitialize")
         cleanup()
         Thread.sleep(1000) // 等待资源完全释放
         initialize()

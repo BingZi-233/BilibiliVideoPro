@@ -6,10 +6,12 @@ import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
 import taboolib.module.lang.asLangText
-import taboolib.module.lang.sendError
-import taboolib.module.lang.sendInfo
-import taboolib.module.lang.sendWarn
-import taboolib.platform.util.sendLang
+import taboolib.common.platform.function.info
+import taboolib.common.platform.function.warning
+import taboolib.common.platform.function.severe
+import taboolib.platform.util.sendError
+import taboolib.platform.util.sendInfo
+import taboolib.platform.util.sendWarn
 
 /**
  * BilibiliVideoPro事件监听器
@@ -22,7 +24,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onPlayerLoginStart(event: PlayerLoginStartEvent) {
-        console().sendInfo("eventPlayerLoginStart", event.player.name)
+        info("Player ${event.player.name} started login")
     }
 
     /**
@@ -31,14 +33,14 @@ object BilibiliEventListener {
     @SubscribeEvent
     fun onPlayerLoginComplete(event: PlayerLoginCompleteEvent) {
         if (event.success) {
-            console().sendInfo("eventPlayerLoginSuccess", event.player.name, event.bilibiliUsername)
+            info("Player ${event.player.name} login success as ${event.bilibiliUsername}")
             submit(async = false) {
-                event.player.sendLang("loginWelcome", event.bilibiliUsername)
+                event.player.sendInfo("loginWelcome", event.bilibiliUsername)
             }
         } else {
-            console().sendWarn("eventPlayerLoginFailed", event.player.name, event.errorMessage ?: "")
+            warning("Player ${event.player.name} login failed: ${event.errorMessage ?: ""}")
             submit(async = false) {
-                event.player.sendLang("loginFailed", event.errorMessage ?: console().asLangText("loginUnknownError", listOf<String>()))
+                event.player.sendError("loginFailed", event.errorMessage ?: console().asLangText("loginUnknownError", listOf<String>()))
             }
         }
     }
@@ -48,7 +50,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onTripleActionCheck(event: TripleActionCheckEvent) {
-        console().sendInfo("eventTripleActionCheck", event.player.name, event.bvid)
+        info("Player ${event.player.name} checking triple action for ${event.bvid}")
     }
 
     /**
@@ -56,10 +58,10 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onTripleActionComplete(event: TripleActionCompleteEvent) {
-        console().sendInfo("eventTripleActionComplete", event.player.name, event.bvid)
+        info("Player ${event.player.name} completed triple action for ${event.bvid}")
 
         submit(async = false) {
-            event.player.sendLang("tripleActionRewardAwarded", event.bvid)
+            event.player.sendInfo("tripleActionRewardAwarded", event.bvid)
         }
     }
 
@@ -68,7 +70,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onRewardGrant(event: RewardGrantEvent) {
-        console().sendInfo("eventRewardGrant", event.player.name, event.rewardType.name)
+        info("Player ${event.player.name} granted reward: ${event.rewardType.name}")
     }
 
     /**
@@ -76,7 +78,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onPlayerStatusQuery(event: PlayerStatusQueryEvent) {
-        console().sendInfo("eventPlayerStatusQuery", event.player.name)
+        info("Player ${event.player.name} status query")
     }
 
     /**
@@ -84,7 +86,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onSystemStatusQuery(event: SystemStatusQueryEvent) {
-        console().sendInfo("eventSystemStatusQuery")
+        info("System status query")
     }
 
     /**
@@ -92,7 +94,7 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onCacheCleanup(event: CacheCleanupEvent) {
-        console().sendInfo("eventCacheCleanup", event.cleanupType.name, event.itemsRemoved.toString(), event.memoryFreed.toString())
+        info("Cache cleanup: ${event.cleanupType.name}, removed ${event.itemsRemoved} items, freed ${event.memoryFreed} bytes")
     }
 
     /**
@@ -101,11 +103,11 @@ object BilibiliEventListener {
     @SubscribeEvent
     fun onErrorHandling(event: ErrorHandlingEvent) {
         val playerName = event.player?.name ?: "Console"
-        console().sendWarn("eventErrorHandling", event.errorType.name, playerName, event.context, event.errorMessage)
+        warning("Error handling: ${event.errorType.name} for ${playerName} in ${event.context}: ${event.errorMessage}")
 
         // 对于严重错误，记录更多信息
         if (event.errorType in listOf(ErrorType.AUTHENTICATION_ERROR, ErrorType.PERMISSION_ERROR, ErrorType.SYSTEM_ERROR)) {
-            console().sendError("eventSeriousError", event.originalError.stackTraceToString())
+            severe("Serious error: ${event.originalError.stackTraceToString()}")
         }
     }
 
@@ -114,6 +116,6 @@ object BilibiliEventListener {
      */
     @SubscribeEvent
     fun onGuiAction(event: GuiActionEvent) {
-        console().sendInfo("eventGuiAction", event.player.name, event.guiType.name, event.actionType.name)
+        info("GUI action: ${event.player.name} ${event.actionType.name} on ${event.guiType.name}")
     }
 }
