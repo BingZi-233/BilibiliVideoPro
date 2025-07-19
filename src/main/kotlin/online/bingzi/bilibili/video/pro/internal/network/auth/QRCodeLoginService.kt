@@ -96,20 +96,61 @@ class QRCodeLoginService(private val apiClient: BilibiliApiClient) {
             return when (code) {
                 STATUS_SUCCESS -> {
                     info("QR码登录成功，开始处理Cookie...")
-                    // 登录成功，检查Cookie是否已被自动保存到CookieJar
-                    val cookieData = getCookiesFromJar()
+                    info("完整响应数据: $jsonResponse")
+                    
+                    // 尝试从响应数据中提取Cookie
+                    val data = jsonResponse.getAsJsonObject("data")
+                    var cookieData: Map<String, String>? = null
+                    
+                    if (data != null) {
+                        info("响应数据内容: $data")
+                        
+                        // 检查响应中是否包含redirect_url
+                        val redirectUrl = data.get("url")?.asString
+                        if (!redirectUrl.isNullOrEmpty()) {
+                            info("检测到重定向URL: $redirectUrl")
+                            cookieData = extractAndSaveCookies(redirectUrl)
+                        }
+                        
+                        // 检查是否直接包含Cookie信息
+                        if (cookieData == null) {
+                            val directCookies = mutableMapOf<String, String>()
+                            listOf("SESSDATA", "bili_jct", "DedeUserID", "DedeUserID__ckMd5").forEach { cookieName ->
+                                data.get(cookieName)?.asString?.let { value ->
+                                    if (value.isNotEmpty()) {
+                                        directCookies[cookieName] = value
+                                        info("从响应中找到Cookie: $cookieName = ${value.take(10)}...")
+                                    }
+                                }
+                            }
+                            if (directCookies.isNotEmpty()) {
+                                apiClient.setCookies(directCookies)
+                                cookieData = directCookies
+                            }
+                        }
+                    }
+                    
+                    // 如果从重定向URL没有获取到Cookie，尝试从CookieJar获取
+                    if (cookieData == null) {
+                        cookieData = getCookiesFromJar()
+                    }
+                    
+                    if (cookieData == null) {
+                        info("Cookie数据获取失败，登录失败")
+                        return LoginPollResult.Error("Cookie数据获取失败，登录失败")
+                    }
                     
                     info("登录成功，玩家信息 - UUID: $playerUuid, 名称: $playerName")
                     
                     // 如果提供了玩家信息，保存到数据库
-                    if (!playerUuid.isNullOrEmpty() && !playerName.isNullOrEmpty() && cookieData != null) {
+                    if (!playerUuid.isNullOrEmpty() && !playerName.isNullOrEmpty()) {
                         info("开始保存Cookie到数据库...")
                         saveCookiesToDatabase(playerUuid, playerName, cookieData)
                     } else {
                         info("跳过数据库保存:")
                         info("  - 玩家UUID: ${if (playerUuid.isNullOrEmpty()) "空" else "有值"}")
                         info("  - 玩家名称: ${if (playerName.isNullOrEmpty()) "空" else "有值"}")
-                        info("  - Cookie数据: ${if (cookieData == null) "空" else "有值"}")
+                        info("  - Cookie数据: 有值")
                     }
 
                     LoginPollResult.Success("登录成功")
