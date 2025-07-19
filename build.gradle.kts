@@ -109,3 +109,29 @@ configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
+
+// 部署到服务器的任务
+tasks.register<Exec>("deployToServer") {
+    group = "deployment"
+    description = "部署构建的jar文件到Minecraft服务器"
+    dependsOn("build")
+    
+    doFirst {
+        val jarFile = file("build/libs").listFiles()?.find { it.name.endsWith(".jar") }
+            ?: throw GradleException("在 build/libs 目录中找不到jar文件")
+        
+        val password = System.getenv("MC_SERVER_PASSWORD") 
+            ?: throw GradleException("未找到环境变量 MC_SERVER_PASSWORD")
+        
+        println("开始部署 ${jarFile.name} 到服务器...")
+        
+        // 使用sshpass和scp命令上传文件
+        commandLine("sshpass", "-p", password, "scp", "-P", "36247", "-o", "StrictHostKeyChecking=no", 
+                   jarFile.absolutePath, "root@s2.mcstory.cc:/data/PrismSkyblock/plugins/")
+    }
+    
+    doLast {
+        val jarFile = file("build/libs").listFiles()?.find { it.name.endsWith(".jar") }
+        println("成功部署 ${jarFile?.name} 到服务器")
+    }
+}
