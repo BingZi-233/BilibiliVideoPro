@@ -9,7 +9,9 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import taboolib.common.platform.function.submit
-import taboolib.platform.util.sendLang
+import taboolib.platform.util.sendInfo
+import taboolib.platform.util.sendWarn
+import taboolib.platform.util.sendError
 import xyz.xenondevs.invui.gui.Gui
 import xyz.xenondevs.invui.gui.PagedGui
 import xyz.xenondevs.invui.item.ItemProvider
@@ -31,7 +33,7 @@ object AdminGui {
      */
     fun show(player: Player) {
         if (!player.hasPermission("bilibilipro.admin")) {
-            player.sendLang("noPermission")
+            player.sendError("noPermission")
             return
         }
 

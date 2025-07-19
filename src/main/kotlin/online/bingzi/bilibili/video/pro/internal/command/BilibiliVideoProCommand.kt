@@ -31,7 +31,9 @@ import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.module.lang.asLangText
 import taboolib.platform.util.asLangText
-import taboolib.platform.util.sendLang
+import taboolib.platform.util.sendInfo
+import taboolib.platform.util.sendWarn
+import taboolib.platform.util.sendError
 
 /**
  * BilibiliVideoPro 主命令处理器
@@ -49,18 +51,18 @@ object BilibiliVideoProCommand {
     @CommandBody
     val main = mainCommand {
         execute<CommandSender> { sender, _, _ ->
-            sender.sendLang("commandHelpTitle")
-            sender.sendLang("commandHelpLogin")
-            sender.sendLang("commandHelpCheck")
-            sender.sendLang("commandHelpStatus")
-            sender.sendLang("commandHelpInfo")
-            sender.sendLang("commandHelpGui")
+            sender.sendInfo("commandHelpTitle")
+            sender.sendInfo("commandHelpLogin")
+            sender.sendInfo("commandHelpCheck")
+            sender.sendInfo("commandHelpStatus")
+            sender.sendInfo("commandHelpInfo")
+            sender.sendInfo("commandHelpGui")
             if (sender.hasPermission("bilibilipro.admin")) {
-                sender.sendLang("commandHelpUnbind")
-                sender.sendLang("commandHelpReload")
-                sender.sendLang("commandHelpSystemStatus")
-                sender.sendLang("commandHelpReport")
-                sender.sendLang("commandHelpCleanStats")
+                sender.sendInfo("commandHelpUnbind")
+                sender.sendInfo("commandHelpReload")
+                sender.sendInfo("commandHelpSystemStatus")
+                sender.sendInfo("commandHelpReport")
+                sender.sendInfo("commandHelpCleanStats")
             }
         }
     }
@@ -130,7 +132,7 @@ object BilibiliVideoProCommand {
         dynamic("player") {
             execute<CommandSender> { sender, _, argument ->
                 if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendLang("noPermission")
+                    sender.sendError("noPermission")
                     return@execute
                 }
 
@@ -148,11 +150,11 @@ object BilibiliVideoProCommand {
     @CommandBody
     val info = subCommand {
         execute<CommandSender> { sender, _, _ ->
-            sender.sendLang("infoTitle")
-            sender.sendLang("infoVersion")
-            sender.sendLang("infoAuthor")
-            sender.sendLang("infoDescription")
-            sender.sendLang("infoInitialized", if (PluginManager.isInitialized()) sender.asLangText("infoYes") else sender.asLangText("infoNo"))
+            sender.sendInfo("infoTitle")
+            sender.sendInfo("infoVersion")
+            sender.sendInfo("infoAuthor")
+            sender.sendInfo("infoDescription")
+            sender.sendInfo("infoInitialized", if (PluginManager.isInitialized()) sender.asLangText("infoYes") else sender.asLangText("infoNo"))
         }
     }
 
@@ -182,7 +184,7 @@ object BilibiliVideoProCommand {
         dynamic("theme_name") {
             execute<CommandSender> { sender, _, argument ->
                 if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendLang("noPermission")
+                    sender.sendError("noPermission")
                     return@execute
                 }
 
@@ -208,7 +210,7 @@ object BilibiliVideoProCommand {
         literal("admin") {
             execute<CommandSender> { sender, _, _ ->
                 if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendLang("noPermission")
+                    sender.sendError("noPermission")
                     return@execute
                 }
 
@@ -222,20 +224,20 @@ object BilibiliVideoProCommand {
                         val performanceStats = SystemMonitor.getPerformanceStats()
 
                         submit(async = false) {
-                            sender.sendLang("systemStatusTitle")
-                            sender.sendLang("systemStatusOverall", healthStatus.overall.name)
-                            sender.sendLang("systemStatusDatabase", healthStatus.database.name)
-                            sender.sendLang("systemStatusSecurity", healthStatus.security.name)
-                            sender.sendLang("systemStatusNetwork", healthStatus.network.name)
-                            sender.sendLang("systemStatusMemory", healthStatus.memory.name)
-                            sender.sendLang("systemStatusUptime", (performanceStats.uptime / 1000).toString())
-                            sender.sendLang("systemStatusMemoryUsage", String.format("%.2f", performanceStats.memoryUsage.usagePercentage))
+                            sender.sendInfo("systemStatusTitle")
+                            sender.sendInfo("systemStatusOverall", healthStatus.overall.name)
+                            sender.sendInfo("systemStatusDatabase", healthStatus.database.name)
+                            sender.sendInfo("systemStatusSecurity", healthStatus.security.name)
+                            sender.sendInfo("systemStatusNetwork", healthStatus.network.name)
+                            sender.sendInfo("systemStatusMemory", healthStatus.memory.name)
+                            sender.sendInfo("systemStatusUptime", (performanceStats.uptime / 1000).toString())
+                            sender.sendInfo("systemStatusMemoryUsage", String.format("%.2f", performanceStats.memoryUsage.usagePercentage))
 
                             if (performanceStats.requestCounts.isNotEmpty()) {
-                                sender.sendLang("systemStatusRequestStats")
+                                sender.sendInfo("systemStatusRequestStats")
                                 performanceStats.requestCounts.forEach { (operation, count) ->
                                     val avgTime = performanceStats.averageExecutionTimes[operation] ?: 0.0
-                                    sender.sendLang("systemStatusRequestDetail", operation, count.toString(), String.format("%.2f", avgTime))
+                                    sender.sendInfo("systemStatusRequestDetail", operation, count.toString(), String.format("%.2f", avgTime))
                                 }
                             }
                         }
@@ -252,7 +254,7 @@ object BilibiliVideoProCommand {
     val report = subCommand {
         execute<CommandSender> { sender, _, _ ->
             if (!sender.hasPermission("bilibilipro.admin")) {
-                sender.sendLang("noPermission")
+                sender.sendError("noPermission")
                 return@execute
             }
 
@@ -275,7 +277,7 @@ object BilibiliVideoProCommand {
     val reload = subCommand {
         execute<CommandSender> { sender, _, _ ->
             if (!sender.hasPermission("bilibilipro.admin")) {
-                sender.sendLang("noPermission")
+                sender.sendError("noPermission")
                 return@execute
             }
 
@@ -291,11 +293,11 @@ object BilibiliVideoProCommand {
                     PluginManager.reinitialize()
 
                     submit(async = false) {
-                        sender.sendLang("reloadSuccess")
+                        sender.sendInfo("reloadSuccess")
                     }
                 } catch (e: Exception) {
                     submit(async = false) {
-                        sender.sendLang("reloadError", e.message ?: "Unknown error")
+                        sender.sendError("reloadError", e.message ?: "Unknown error")
                     }
                 }
             }
@@ -310,7 +312,7 @@ object BilibiliVideoProCommand {
         literal("stats") {
             execute<CommandSender> { sender, _, _ ->
                 if (!sender.hasPermission("bilibilipro.admin")) {
-                    sender.sendLang("noPermission")
+                    sender.sendError("noPermission")
                     return@execute
                 }
 
@@ -319,7 +321,7 @@ object BilibiliVideoProCommand {
                     online.bingzi.bilibili.video.pro.internal.error.ErrorHandler.clearErrorStatistics()
 
                     submit(async = false) {
-                        sender.sendLang("cleanStatsSuccess")
+                        sender.sendInfo("cleanStatsSuccess")
                     }
                 }
             }
@@ -332,7 +334,7 @@ object BilibiliVideoProCommand {
     private fun switchGuiTheme(sender: CommandSender, themeName: String) {
         // 实现主题切换逻辑
         submit(async = false) {
-            sender.sendLang("themeSwitchInDevelopment")
+            sender.sendInfo("themeSwitchInDevelopment")
         }
     }
 
@@ -345,7 +347,7 @@ object BilibiliVideoProCommand {
             val existingBinding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
             if (existingBinding != null) {
                 submit(async = false) {
-                    player.sendLang("loginAlreadyBound", existingBinding.bilibiliUsername)
+                    player.sendInfo("loginAlreadyBound", existingBinding.bilibiliUsername)
                 }
                 return
             }
@@ -356,14 +358,14 @@ object BilibiliVideoProCommand {
                 // 移除现有会话
                 CacheCleanupManager.removeLoginSession(player.uniqueId.toString())
                 submit(async = false) {
-                    player.sendLang("loginCancelled")
+                    player.sendInfo("loginCancelled")
                 }
             }
 
             val networkManager = BilibiliNetworkManager.getInstance()
 
             submit(async = false) {
-                player.sendLang("loginStarting")
+                player.sendInfo("loginStarting")
             }
 
             // 生成QR码
@@ -380,7 +382,7 @@ object BilibiliVideoProCommand {
                     val mapItem = MapItemHelper.createQRCodeMapItem(qrData.url, console().asLangText("loginQRCodeTitle"))
                     submit(async = false) {
                         NMSHelper.sendTemporaryVirtualMapItem(player, -1, mapItem, 600) // 10分钟后自动清除
-                        player.sendLang("loginQRCodeGenerated")
+                        player.sendInfo("loginQRCodeGenerated")
                     }
 
                     // 开始轮询登录状态
@@ -398,7 +400,7 @@ object BilibiliVideoProCommand {
                     errorEvent.call()
 
                     submit(async = false) {
-                        player.sendLang("loginQRCodeFailed", qrResult.message)
+                        player.sendError("loginQRCodeFailed", qrResult.message)
                     }
                 }
             }
@@ -414,7 +416,7 @@ object BilibiliVideoProCommand {
             errorEvent.call()
 
             submit(async = false) {
-                player.sendLang("loginError", e.message ?: "Unknown error")
+                player.sendError("loginError", e.message ?: "Unknown error")
             }
         }
     }
@@ -443,7 +445,7 @@ object BilibiliVideoProCommand {
                     CacheCleanupManager.removeLoginSession(playerUuid)
 
                     submit(async = false) {
-                        player.sendLang("loginTimeout")
+                        player.sendWarn("loginTimeout")
                     }
                     return@submit
                 }
@@ -470,7 +472,7 @@ object BilibiliVideoProCommand {
 
                         // 暂时简化处理，只显示成功消息
                         submit(async = false) {
-                            player.sendLang("loginSuccess", console().asLangText("loginSuccessMessage"))
+                            player.sendInfo("loginSuccess", console().asLangText("loginSuccessMessage"))
                         }
                     }
 
@@ -500,7 +502,7 @@ object BilibiliVideoProCommand {
                         loginCompleteEvent.call()
 
                         submit(async = false) {
-                            player.sendLang("loginExpired")
+                            player.sendWarn("loginExpired")
                         }
                     }
 
@@ -518,7 +520,7 @@ object BilibiliVideoProCommand {
                         errorEvent.call()
 
                         submit(async = false) {
-                            player.sendLang("loginError", statusResult.message)
+                            player.sendError("loginError", statusResult.message)
                         }
                     }
                 }
@@ -540,7 +542,7 @@ object BilibiliVideoProCommand {
             val bvidValidation = InputValidator.validateBvid(bvid)
             if (!bvidValidation.isValid) {
                 submit(async = false) {
-                    player.sendLang("invalidBvid", bvidValidation.errorMessage ?: "BV号格式错误")
+                    player.sendError("invalidBvid", bvidValidation.errorMessage ?: "BV号格式错误")
                 }
                 return
             }
@@ -548,7 +550,7 @@ object BilibiliVideoProCommand {
             val uuidValidation = InputValidator.validatePlayerUuid(player.uniqueId.toString())
             if (!uuidValidation.isValid) {
                 submit(async = false) {
-                    player.sendLang("systemError", console().asLangText("playerUuidValidationFailed"))
+                    player.sendError("systemError", console().asLangText("playerUuidValidationFailed"))
                 }
                 return
             }
@@ -557,7 +559,7 @@ object BilibiliVideoProCommand {
             val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
             if (binding == null) {
                 submit(async = false) {
-                    player.sendLang("notBoundToBilibili")
+                    player.sendWarn("notBoundToBilibili")
                 }
                 return
             }
@@ -568,7 +570,7 @@ object BilibiliVideoProCommand {
             }
 
             submit(async = false) {
-                player.sendLang("checkingTripleAction", bvid)
+                player.sendInfo("checkingTripleAction", bvid)
             }
 
             val networkManager = BilibiliNetworkManager.getInstance()
@@ -577,7 +579,7 @@ object BilibiliVideoProCommand {
             // 加载玩家的Cookie到ApiClient
             if (!networkManager.loadPlayerCookies(player.uniqueId.toString())) {
                 submit(async = false) {
-                    player.sendLang("systemError", "Cookie加载失败")
+                    player.sendError("systemError", "Cookie加载失败")
                 }
                 return
             }
@@ -611,7 +613,7 @@ object BilibiliVideoProCommand {
                         tripleCompleteEvent.call()
 
                         submit(async = false) {
-                            player.sendLang("tripleActionCompleted", bvid)
+                            player.sendInfo("tripleActionCompleted", bvid)
                         }
 
                         // 设置冷却时间
@@ -621,7 +623,7 @@ object BilibiliVideoProCommand {
                         executeRewardScript(player, bvid)
                     } else {
                         submit(async = false) {
-                            player.sendLang(
+                            player.sendInfo(
                                 "tripleActionIncomplete",
                                 if (status.isLiked) "✓" else "✗",
                                 if (status.isCoined) "✓" else "✗",
@@ -642,7 +644,7 @@ object BilibiliVideoProCommand {
                     errorEvent.call()
 
                     submit(async = false) {
-                        player.sendLang("checkTripleActionFailed", tripleResult.message)
+                        player.sendError("checkTripleActionFailed", tripleResult.message)
                     }
                 }
             }
@@ -658,7 +660,7 @@ object BilibiliVideoProCommand {
             errorEvent.call()
 
             submit(async = false) {
-                player.sendLang("checkTripleActionError", e.message ?: "Unknown error")
+                player.sendError("checkTripleActionError", e.message ?: "Unknown error")
             }
         }
     }
@@ -673,7 +675,7 @@ object BilibiliVideoProCommand {
         if (CacheCleanupManager.isPlayerOnCooldown(playerUuid)) {
             val remainingTime = CacheCleanupManager.getPlayerCooldownRemaining(playerUuid)
             submit(async = false) {
-                player.sendLang("globalCooldown", remainingTime)
+                player.sendWarn("globalCooldown", remainingTime)
             }
             return true
         }
@@ -682,7 +684,7 @@ object BilibiliVideoProCommand {
         if (CacheCleanupManager.isVideoOnCooldown(playerUuid, bvid)) {
             val remainingTime = CacheCleanupManager.getVideoCooldownRemaining(playerUuid, bvid)
             submit(async = false) {
-                player.sendLang("videoCooldown", remainingTime)
+                player.sendWarn("videoCooldown", remainingTime)
             }
             return true
         }
@@ -751,7 +753,7 @@ object BilibiliVideoProCommand {
                 )
                 errorEvent.call()
 
-                player.sendLang("scriptExecutionError", e.message ?: "Unknown error")
+                player.sendError("scriptExecutionError", e.message ?: "Unknown error")
             }
         }
     }
@@ -764,7 +766,7 @@ object BilibiliVideoProCommand {
             val binding = PlayerBilibiliService.findByPlayerUuid(player.uniqueId.toString())
             if (binding == null) {
                 submit(async = false) {
-                    player.sendLang("notBoundToBilibili")
+                    player.sendWarn("notBoundToBilibili")
                 }
                 return
             }
@@ -783,12 +785,12 @@ object BilibiliVideoProCommand {
             statusEvent.call()
 
             submit(async = false) {
-                player.sendLang("statusTitle")
-                player.sendLang("statusBoundAccount", binding.bilibiliUsername, binding.bilibiliUid)
-                player.sendLang("statusBindTime", binding.createdTime)
-                player.sendLang("statusLastLogin", binding.lastLoginTime ?: "从未")
-                player.sendLang("statusInteractionCount", stats.totalVideos)
-                player.sendLang("statusTripleActionCount", stats.tripleCompletedVideos)
+                player.sendInfo("statusTitle")
+                player.sendInfo("statusBoundAccount", binding.bilibiliUsername, binding.bilibiliUid)
+                player.sendInfo("statusBindTime", binding.createdTime)
+                player.sendInfo("statusLastLogin", binding.lastLoginTime ?: "从未")
+                player.sendInfo("statusInteractionCount", stats.totalVideos)
+                player.sendInfo("statusTripleActionCount", stats.tripleCompletedVideos)
             }
 
         } catch (e: Exception) {
@@ -802,7 +804,7 @@ object BilibiliVideoProCommand {
             errorEvent.call()
 
             submit(async = false) {
-                player.sendLang("statusError", e.message ?: "Unknown error")
+                player.sendError("statusError", e.message ?: "Unknown error")
             }
         }
     }
@@ -814,12 +816,12 @@ object BilibiliVideoProCommand {
         try {
             // 暂时不支持按玩家名解绑，因为findByPlayerName不存在
             submit(async = false) {
-                sender.sendLang("unbindPlayerNotFound", targetPlayerName)
+                sender.sendWarn("unbindPlayerNotFound", targetPlayerName)
             }
 
         } catch (e: Exception) {
             submit(async = false) {
-                sender.sendLang("unbindError", e.message ?: "Unknown error")
+                sender.sendError("unbindError", e.message ?: "Unknown error")
             }
         }
     }

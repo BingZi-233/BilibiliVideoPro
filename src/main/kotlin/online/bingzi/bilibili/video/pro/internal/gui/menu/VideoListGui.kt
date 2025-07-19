@@ -8,7 +8,9 @@ import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
-import taboolib.platform.util.sendLang
+import taboolib.platform.util.sendInfo
+import taboolib.platform.util.sendWarn
+import taboolib.platform.util.sendError
 import xyz.xenondevs.invui.gui.Gui
 import xyz.xenondevs.invui.gui.PagedGui
 import xyz.xenondevs.invui.item.ItemProvider
@@ -330,7 +332,7 @@ object VideoListGui {
                 ClickType.RIGHT -> {
                     player.closeInventory()
                     // 快速检查逻辑
-                    player.sendLang("quickCheckStarted", video.bvid)
+                    player.sendInfo("quickCheckStarted", video.bvid)
                     player.performCommand("bvp check ${video.bvid}")
                 }
 
